@@ -3,7 +3,7 @@
 <h1>Kurs devam etmektedir</h1>
 
 
-1.Ders	--->	Giriş Bilgileri
+<h3> 1.Ders	--->	Giriş Bilgileri </h3>
 2.Ders	--->	Giriş Bilgileri
 3.Ders	--->	Giriş Bilgileri
 4.Ders	--->	getopt
