@@ -42044,7 +42044,7 @@ void exit_sys(const char *msg)
 /*--------------------------------------------------------------------------------------------------------------------------
 	Soket programlamada bir tarafın tek bir send ya da write ile gönderdiklerni diğer tarafın tek bir recv ya da read ile 
 	okuması garanti değildir. Örneğin biz tel bir send ile 10000 byte göndermiş olalım. Karşı taraf da recv fonksiyonu ile 
-	bir göngüde sürekli okuma yapıyor olsun. Örneğin karşı taraf önce recv ile 4096 byte okuyabilir. Sonra diğer recv ile 
+	bir döngüde sürekli okuma yapıyor olsun. Örneğin karşı taraf önce recv ile 4096 byte okuyabilir. Sonra diğer recv ile 
 	kalan byte'ları okuyabilir. Bu durum soket programlarının organizasyonunu biraz karışık hale getirmektedir. Bu nedenle 
 	örneğin biz 10000 byte gönderen bir tarafın gönderdiği 10000 byte'ı okuyabilmek için bir döngü kullanmamız gerekir. 
 	Soketten belli miktarda byte okuyana kadar okumayı devam ettiren bir fonksiyon aşağıdaki gibi yazılabilir:
@@ -42072,13 +42072,18 @@ void exit_sys(const char *msg)
 	kadar değil result kadar byte okunmuş olabilir. Bu durumda left okunan miktar kadar azaltılmış index ise o miktar 
 	kadar artırılmıştır. Yukarıdaki fonksiyonundan üç nedenle çıkılabilir:
 
-	1) Bağlantı kopmutur ve recv başarısız olur.
+	1) Bağlantı kopmuştur ve recv başarısız olur.
 	2) Karşı taraf soketi kaapatmıştır. recv 0 ile geri döner.
 	3) İstenen kadar miktar okunmuştur. 
 
+	Aslında recv fonksiyonunun talep edilen miktarda byte'ların hepsinin okunabilmesi için MSG_WAITALL biçiminde bir flags parametresi
+	de vardır. Ancak MSG_WAITALL flags parametresi alma tamponundan daha yüksek miktarda verilerin okunması için uygun olmayabilmektedir.
+	Bu konu ileride ele alınacaktır. 
+	
 	Yeniden vurgulamak gerekirse bir soketten n byte okuma işlemi tek bir recv ile başarılmak zorunda değildir. Soket programlamaya
-	yeni başlayanlar sanki bir disk dosyasından ya da borudan bilgi okunuyor gibi tek bir okuma çağrısı ile bunu yapma 
-	eğilimindedirler. Halbuki bu işlem yukarıdaki gibi bir döngüyle yapılmak zorundadır. 
+	yeni başlayanlar sanki bir disk dosyasından ya da borudan bilgi okunuyor gibi tek bir okuma çağrısı ile bunu yapma eğilimindedirler. 
+	Halbuki bu işlem yukarıdaki gibi bir döngüyle ya da recv fonksiyonuna MSG_WAITALL flags parametresi girilerek yapılmak 
+	zorundadır. 
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
@@ -42478,7 +42483,6 @@ void exit_sys(const char *msg)
 
 	exit(EXIT_FAILURE);
 }
-
 
 /*--------------------------------------------------------------------------------------------------------------------------
     Soket bağlantısında kullanılan diğer iki fonksiyon da getpeername ve getsockname fonksiyonlarıdır. getpeername fonksiyonu
@@ -45225,36 +45229,1130 @@ void exit_sys(const char *msg)
 }
 
 /*--------------------------------------------------------------------------------------------------------------------------
-
+										106. Ders 16/12/2023 - Cumartesi
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
+    TCP/IP ya da UDP/IP server uygulamalarında server'ın bir client'tan gelen isteği yerine getirmesi bir zaman kaybı 
+	oluşturabilmektedir. Server bir client ile uğraşırken diğer client'ların istekleri mecburen bekletilir. İşte bu durumu 
+	en aza indirmek için select, poll (ve epoll) modellerinde server bir client'ın isteğini bir thread ile yerine getirebilir. 
+	Böylece server birden fazla client'a aynı anda hizmet verebilecektir. Örneğin select modelinde bu işlem şöyle yapılabilir:
 
+    for (;;) {
+        select(.....);
+        if (<belli bir sokete bilgi geldi>) {
+            <thread oluştur ve işlemi thread'e devret>
+        }
+    }
+
+	Benzer biçimde UDP server uygulamasında da işlem şöyle yapılabilir:
+	
+    for (;;) {
+        recvfrom(....)
+        <thread oluştur ve işlemi thread'e devret> 
+    }
+
+    Tabii burada küçük bir işlem için yeni bir thread'in yaratılıp yok edilmesi etkin bir yöntem değildir. Çünkü bilindiği gibi
+    thread'lerin yaratılıp yok edilmeleri de dikkate değer bir zaman kaybı oluşturmaktadır. Thread'ler konusunda da belirttiğimiz 
+	gibi bu tür durumlarda "thread havuzları (thread pools)" kullanılabilir. Thread havuzlarında zaten belli bir miktar thread 
+	yaratılmış ve bekler durumda (suspend durumda) tutulmaktadır. Böylece client'tan gelen isteğin bu thread'lerden biri tarafından 
+	gerçekleştirilmesi sağlanır. POSIX sistemlerinde C'den kullanılabilecek standart bir thread havuzu mekanizmasının olmadığını
+	anımsayınız. Bu nedenle böyle bir thread havuzunu programcının kendisi yazabilir ya da C için yazılmış olan bir thread havuzu
+	kütüphanesini kullanabilir. Windows sistemlerinde işletim sistemi düzeyinde thread havuzlarına ilişkin standart API fonksiyonları 
+	bulunmaktadır. C++'ta pek çok framework içerisinde (MFC gibi, Qt gibi) zaten thread havuzları sınıfsal biçimde bulunmaktadır. 
+
+	Pekiyi yoğun bir server düşünelim. Makinemizde de bir tane işlemci bulunuyor olsun. Böyle bir thread havuzunun kullanılması
+	gerçek anlamda bir fayda sağlayabilir mi? Örneğin 5 tane client'ın isteğini thread yoluyla sağlamaya çalışalım. Her client'ın 
+	isteiği için 3 quanta süresi gerekiyor olsun. İşlemler seri yapıldığında toplam 15 quanta zamanında tüm client'ların mesajları 
+	işlenmiş olacaktır. Thread'ler kullanıldığında işlemcinin çalışma kuyruğunda (run queue) 5 thread bulunacak ve bunlar 
+	zaman paylaşımlı biçimde çalışacaktır. Dolayısıyla yine bu client'ların hepsinin işlerini bitirmesi için 15 quanta süresi 
+	gerekecektir. Tabii sistemde başka proseslerin thread'leri de varsa çok thread'li çalışma toplamda bu server'ın diğer 
+	proseslere göre daha fazla işlemci zamanı kullanmasına yol açacaktır. 
+
+	Ancak makinemizde birden fazla işlemci varsa bu durumda yukarıdaki thread sistemi belirgin bir avantaj sağlayacaktır. 
+	Bu tür durumlarda işlemci sayısı kadar thread'in aynı anda çalışması sağlanabilir. Bu thread'ler farklı işlemcilerde
+	eş zamanlı bir biçimde çalışabileceği için ciddi bir hızlanma sağlanacaktır. Tabii buradaki thread'lerin aynı anda 
+	farklı işlemciler tarafından çalıştırılması gerekir. İşletim sistemleri genellikle bu ayarlamayı kendi içlerinde yapabilmektedir. 
+	Örneğin Linux sistemlerinde kullanılan güncel çizelgeleme algoritmasında her işlemci için ayrı bir çalışma kuyruğu oluşturulmajta
+	ve thread'ler bunlara dinamik bir biçimde dağıtılmaktadır. Ancak yine de bazı durumlarda thread'lerin belli işlemcilere
+	programcı tarafından ataması (processor affinity) gerekebilmektedir. 
+	
+	Örneğin makinemizde 8 işlemci ya da çekirdek olsun. Bu durumda biz 8 tane thread yaratıp bu 8 thread'in farklı işlemcilerde 
+	eş zamanlı olarak kendi içlerinde seri bir biçimdeçalışmasını sağlayabiliriz. Bunun sağlanması iki biçimde yapılabilir. 
+	Birincisi her thread için yularıdaki döngü yeniden oluşturulabilir. Örneğin:
+
+	/* 1'inci thread */
+
+   for (;;) {
+        recvfrom(....)
+        <mesajı işle> 
+    }
+
+	/* 2'inci thread */
+
+   for (;;) {
+        recvfrom(....)
+        <mesajı işle> 
+    }
+	....
+
+	Soket soket fonksiyonları bu bağlamda thread güvenlidir. İkinci yöntemde server aldığı mesajları bir kuyruğa yazar. 
+	Thread'ler de aynı kuyruktan mesajları alarak işleme sokar. Örneğin:
+
+	for (;;) {
+        recvfrom(....)
+        <mesajı kuyruğa yerleştir>
+    }
+	...
+
+	/* 1'inci thread */
+
+   for (;;) {
+        <kuyruktan mesajı al işle> 
+    }
+
+	/* 2'inci thread */
+
+   for (;;) {
+        <kuyruktan mesajı al işle> 
+    }
+	....
+
+	Bu tür surumlarda işlemci ya da çekirdek sayısından daha fazla thread'in oluşturulması özel durumlar dışında önemli bir 
+	fayda sağlamamaktadır.
+
+	Linux'un epoll modelinde thread'li kullanımda Linux genel olarak her işlemci ya da çekirdek için gerektiğinde kendisi 
+	thread oluşturmaktadır. Dolayısıyla epoll modeli yukarıdaki gibi bir organizasyon yapılmasa da daha iyi bir performans 
+	göstermektedir. 
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
+	Pekiyi client istekleri için çok işlemcili ya da çok çekirdekli bir bilgisayar yetmiyorsa ne olacak? Bu tür durumlarda 
+	işleri birden fazla server makineye dağıtmak gerekir. Client'ın birden çok server olduğunu fark etmemesi dolayısıyla bu 
+	sürecin tamamen ser tarafta otomatik hale getirilmesi uygun olur. Aynı makinenin klonundan çıkartıp sisteme eklendiğinde
+	yükü paylaşabilmesi sağlanmalıdır. Böylece "ölçeklenebilir (scalable)" bir sistem söz konusu olacaktır. Pekiyi yük bu server
+	makinelere nasıl dağıtılabilir? İşte bunun için kullanılan mekanizmaya "load balancing", bu makanizmayı sağlayan birime de
+	"load balancer" denilmektedir. 
 
+	Server Makine			Server Makine		Server Makine	   	Server Makine	    ...
+
+								     Load Balancer
+
+	Bu tür dağıtık sistemlerde client aslında "load balancer" ile bağlantı sağlar. Load balancer client'ı en az neşgul olan 
+	server'a iletir. Bugün kullanılan cloud sistemler de kendi içlerinde load balancer benzeri mekanizmalar içermektedir. 
+	Load Balencer'lar tamamen donaımsal olarak ya da tamamen yazılımsal olarak gerçekleştirilebilmektedir. Yazılımsal gerçekleştirim
+	daha esnek olabilmektedir. Ancak donanımsal herçekleştirimler bazı durumlarda daha etkin olabilmektedir. 
+
+	Donanmsal load balancer'larda client server ile bağlantı kurmak istediğinde load balancer devreye girip sanki yalnızca 
+	en az meşgul olan server sistemde varmış gibi bağlantıyı onun kabul etmesini sağlamaktadır. Yazılımsal load balancer'larda
+	load balancer bir "proxy" gibi çalışmaktadır. Client load balancer ile bağlantı sağlar. Load balancer bunu en az meşgul server'a
+	yönlendirir. Bu kez client bu server ile bağlantı kurar. Buradaki load balancer görevini yapan "proxy" programınının server
+	yüklerini sürekli izlemesi gerekmektedir. Bunun için genellikle UDP protokolü kullanılmaktadır. Yani UDP ile serer makineler
+	sürekli bir içimde kendi durumlarını proxy'ye iletirler. Proxy'de bu bilgilerden hareketle en az meşgul server'ı tespit 
+	eder. Tabii server makineler eğer devre dışı kılırsa proxy'inin bunu fark etmesi ve artık ona yönlendirme yapmaması gerekir.
+	Benzer biçimde yeni bir server makinesi sisteme eklendiğinde proxy hemen onu da sisteme otomatik oalrak dahil etmelidir. 
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
-
+	Şimdi de TCP/IP ve UDP/IP ptorolerinin ve bunun için kullanılan soket fonksiyonlatının ayrıntıları üzerinde duracağız.
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
+    TCP için kullandığımız recv ve send fonksiyonlarının read ve write fonksiyonlarından tek farkı flags parametresidir. 
+	Biz yukarıdaki örneklerde bu parametreyi 0 geçtik. Dolayısıyla yukarıdaki örneklerde kullandığımız recv ve send fonksiyonlarının 
+	read ve write fonksiyonlarından hiçbir farkı yoktur. Pekiyi bu flag değerleri neler olabilir? İşte POSIX standartlarında 
+	recv fonksiyonundaki flag değerleri şunlardan biri ya da birden fazlası olabilir:
 
+    MSG_PEEK: Bu bayrak gelen bilginin tampondan okunacağını ancak tampondan atılmayacağını belirtmektedir. Yani biz MSG_PEEK 
+	flag değeri ile okuma yaparsak hem bilgiyi elde ederiz hem de sanki hiç okuma yapmamışız gibi bilgi netwrok tamponunda kalır. 
+	Dolayısıyla bizim thread'imiz ya da başka bir thread recv yaparsa tampondakinş okuyacaktır. Pekiyi bu bayrak hani amaçla
+	kullanılmaktadır. Bazen (çok seyrek olarak) mesajın ne olduğuna MSG_PEEK ile bakıp duruma göre onu kuyruktan almak isteyebiliriz. 
+	Eğer mesaj bizim beğenmediğimiz bir mesajsa onu almak istemeyebiliriz. Onun başka bir thread tarafından işlenmesini sağlayabiliriz. 
+    
+	MSG_OOB: Out-of-band data (urgent data) denilen okumalar için kullanılmaktadır. Out-of-band data konusu ayrı bir paragrafta 
+	açıklanacaktır.
+
+    MSG_WAITALL: Bu bayrak n byte okunmak istendiğinde bu n byt'ın hepsi okunana kadar bekleme sağlamaktadır. Fakat bu durumda bir 
+	sinyal geldiğinde yine recv -1 ile geri döner ve errno EINTR ile set edilir. Yine soket kapatıldığında ya da soket üzerinde 
+	bir hata oluştuğunda fonksiyon talep edilen kadar bilgiyi okuyamamış olabilir. Biz daha önce n byte okuma yapmak için aşağıdaki 
+	gibi bir fonksiyon önermiştik:
+
+	ssize_t read_socket(int sock, char *buf, size_t len)
+	{
+		size_t left, index;
+
+		left = len;
+		index = 0;
+
+		while (left > 0) {
+			if ((result = recv(sock, buf + index, left, 0)) == -1)
+				return -1;
+			if (result == 0)
+				break;
+			index += result;
+			left -= result;
+		}
+
+		return (ssize_t) index;
+	}
+
+	İşte aslında recv fonksiyonundaki MSG_WAITALL bayrağı adreta bunu sağlamaktadır. Ancak yine de bu bayrağın bazı sistemlerde bazı 
+	problemleri vardır. Örneğin Windows sistemlerinde ve Linux sistemlerinde bu bayrakla okunmak istenen miktar network alım tamponunun
+	büyüklüğünden fazlaysa istenen kadar miktarda byte okunamayabilmektedir. Ancak bu bayrak yüksek olmayan miktarlarda okumalar 
+	için yukarıdaki fonksiyonun yerine kullanılabilmektedirç 
+
+    send fonksiyonundaki POSIX bayrakları da şunlardır:
+
+    MSG_EOR: Soket türü SOCK_SEQPACKET ise kaydı sonlandırmakta kullanılır.
+
+    MSG_OOB: Out-of-band data gönderimi için kullanılmaktadır. Bu konu ayrı bir paragrafta ele alınacaktır.
+
+    MSG_NOSIGNAL: Normal olarak send ya da write işlemi yapılırken karşı taraf soketi kapatmışsa bu fonksiyonların çağrıldığı 
+	tarafta SIGPIPE sinyali oluşmaktadır. Ancak bu bayrak kullanılırsa böylesi durumlarda SIGPIPE sinyali oluşmaz, send 
+	ya da write fonksiyonu -1 ile geri döner ve errno EPIPE değeri ile set edilir. 
+
+    Linux POSIX'in bayraklarından daha fazlasını bulundurmaktadır. Örneğin recv ve send işleminde MSG_DONTWAIT bir çağrımlık 
+	"nonblocking" etki yaratmaktadır. Yani recv sırasında network tamponunda hiç bilgi yoksa recv bloke olmaz, -1 ile geri 
+	döner errno EAGAIN değeri ile set edilir. send işlemi sırasında da network tamponu dolu ise send bloke olmaz -1 ile geri 
+	döner errno yine EAGAIN değeri ile set edilir. 
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
+	Normal olarak connect/accept işlemi TCP'de kullanılmaktadır. Ancak UDP soketlerde de seyrek biçimde connect/accept 
+	kullanılabilir. Eğer UDP bir soket connect ile UDP server'a bağlanırsa (server da bunu accept ile kabul etmelidir) bu durumda
+	artık iki taraf recvfrom ve sendto fonksiyonlarının yerine recv ve send fonksiyonlarını kullanabilir. Tabii burada yine 
+	datagram haberleşmesi yapılmaktadır. Yalnızca her defasında gönderme ve alma işlemlerinde karşı tarafın soketine ilişkin 
+	bilgilerin belirtilmesine gerek kalmamaktadır. Bu biçimdeki connect/accept bağlantısında yine bir akış kontrolü uygulanmamaktadır. 
 
+	Aslında recv fonksiyonu yerine recvfrom fonksiyonu da kullanılabilir. Yani recvfrom fonksiyonunun son iki parametresi NULL
+	geçilirse zaten bu işlem recv ile eşdeğer olmaktadır. Örneğin aşağıdaki iki çağrı eşdeğerdir:
+
+	result = recv(sock, buf, len, flags)
+	result = recvfrom(sock, buf, len, flags, NULL, NULL)
+
+	Benzer biçimde send yerine sendto fonksiyonu da kullanılabilir. Bu durumda sendto fonksiyonunun son iki parametresi 
+	ihmal edilir. Örneğin aşağıdaki iki çağrı eşdeğerdir:
+
+	result = send(sock, buf, len, flags)
+	result = sendto(sock, buf, len, flags, any_value, any_value);
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
+	Biz şimdiye kadar client ile server programlar arasında ciddi bir mesaj alışverişi yapmadık. Verdiğimiz örneklerde client
+	program server programa bir yazı iletiyordu. Server program da client'a bu yazıyı ters çevirip gönderiyordu.Bu çok basit 
+	bir mesajlaşma işlemidir. Halbuki gerçek client-server uygulamalarında mesajlaşmalar çok daha çeşitli ve ayrıntılıdır. 
+	Gerçek uygulamalarda client program server programdan çok çeşitli seyleri yapmasını isteyebilir. Server'da client'ın isteğine
+	uygun bir biçimde yanıtları iletir. Örneğin dört işlem yapan bir server program olsun. Client iki operand'ı server'a gönderip 
+	ondan dört işlemden birini yapmasını istesin. Bu durumda client'ın server'a gönderdiği mesajlar fazlalaşmaktadır. Örneğin
 
+	ADD op1 op2
+	SUB op1 op2
+	MUL op1 op2
+	DIV op1 op2
+
+	Bir char programında client server'dan pek çok isteyebilir. Server da client'a çok çeşitli bilgiler iletebilir. Yani bu 
+	tür uygulamalarda mesajın bir içeriği ve parametreleri vardır. 
+
+	Pekiyi mesajlar karşı tarafa hangi formatta iletilecektir? İşte bunun için binaet ve text olmak üzere iki mesajlaşma 
+	tekniği kullanılmaktadır. 
+
+	Binary mesajlaşmadakabaca her iki taraf birbirlerine bir yapı nesnesinin içeriğini binay biçimde gönderir. Karşı taraf 
+	da bu yapı nesnesini alarak işlemini yapar. Ancak farklı mesajlarda farklı yapılar kullanılacağı için mesajın başında mesajın 
+	türünü ve uzunluğunu belirten ortak bir başlık kısmı bulundurulur.  Bunun için tipik olarak şöyle bir yol izlenir: Mesajı 
+	gönderecek taraf önce mesajın uzunluğunu sonra da mesajın ne mesajı olduğunu belirten mesaj kodunu (numarasını) sonra da mesajın
+	içeriğini karşı ataarafa yollar. Bu işlemi "pseudo code" olarak aşağıdaki gibi ifade edebiliriz: 
+
+	typedef struct tagMSG_HEADER {
+		int len;
+		int type;
+	} MSG_HEADER;
+
+	typedef struct tagMSG_XXX {
+		/* message info */
+	} MSG_XXX;
+
+	typedef struct tagMSG_YYY {
+		/* message info */
+	} MSG_YYY;
+
+	Örneğin MSG_XXX mesajı karşı tarafa gönderilecek olsun:
+
+	MSG_HEADER header;
+	MSG_XXX msg_xxx;
+
+	header.len = sizeof(MSG_XXX);
+	header.type = MSG_TYPE_XXX;
+	send(sock, &header, sizeof(MSG_HEADER), 0);
+	
+	<msg_xxx'in içi dolduruluyor>
+
+	send(sock, &msg_xxx, sizeof(MSG_XXX), 0);
+	
+	Mesajı alan taraf da önce mesajın uzunluğunu ve kodunu elde eder, sonra da türünü elde eder ve soketten o uzunlukta okuma 
+	yapar. Örneğin:
+
+	MSG_HEADER header;
+	MSG_XXX msg_xxx;
+	...
+
+	recv(sock, &header, sizeof(MSG_HEADER), MSG_WAITALL);
+
+	switch (header.type) {
+		case MSG_TYPE_XXX:
+			recv(sock, &msg_xxx, sizeof(header.len), MSG_WAITALL);
+			process_msg_xxx(&msg_xxx);
+			break;
+		... 
+	}
+
+	Burada aklınıza şöyle bir soru gelebilir: Okuyan taraf zaten mesajın kodunu (numarasını) elde edince o mesajın kaç byte 
+	uzunlukta olduğunu bilmeyecek mi? Bu durumda mesajın uzunluğunun karşı tarafa iletilmesine ne gerek var? İşte mesajlar 
+	sabit uzunlukta olmayabilir. Örneğin mesajın içerisinde bir metin bulunabilir. Bu durumda mesajın gerçek uzunluğu bu metnin
+	uzunluğuna bağlı olarak değişebilir. Genel bir çözüm için mesajın uzunluğunn da karşı tarafa iletilmesi gerekmektedir. 
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
+											107. Ders 17/12/2023 - Pazar
+---------------------------------------------------------------------------------------------------------------------------*/		
+
+/*--------------------------------------------------------------------------------------------------------------------------
+	Yukarıdaki gibi binary tabanlı mesajlaşma daha hızlı ve etkin olma eğiliminde ise de pratikte daha çok text tabalı mesajlaşmalar
+	kullanılmaktadır. Çünkü text tabalı mesajlaşmalar insanlar tarafından yazısal biçimde de oluşturulabilmektedir. IP protokol 
+	ailesinin uygulama katmanındaki PO3 gibi, TELNET gibi, FTP gibi protokolleri text tabanlı mesajlaşmayı kullanmaktadır.
+
+	Text tabanlı mesajlaşmada client'tan server'a ve server'dan client'a gönderilen mesajla bir yazı olarak gönderilir. 
+	Karşı taraf bu yazıyı alır, parse eder ve gereğini yapar. Programlama dillerinde yazılarla işlem yapabilen pek çok 
+	standart araç bulunduğu için bu biçimde mesajların işlenmesi genel olarak daha kolaydır. Ancak mesaj tabanlı gaberleşme 
+	genel olarak daha yavaştır. Çünkü birtakım bilgilerin yazısal olarak ifade edilmesi bibary ifade edilmesinden genel 
+	olarak daha fazla yer kaplama eğilimindedir. 
+
+	Text tabanlı mesajlaşmada önemli bir sorun mesajın nerede bittiğinin tespit edilmesidir. Bunun için mesajın sonu özel 
+	bir karakterle sonlandırılabilir. Örneğin IP protokol ailesinin uygulama katmanındaki protokoller genel olarak mesajları 
+	CR/LF ('\r' ve '\n') çiftiyle bitirmektedir. Örneğin:
+
+	"ADD op1 op2\r\n"
+	"SUB op1 op2\r\n"
+	"MUL op1 op2\r\n"
+	"DIV op1 op2\r\n"
+
+	Tabii bu biçimdeki mesajlaşmalarda soketten CR/LF çifti görülene kadar okuma yapılması gerekir. Bu işlem soketten byte 
+	byte okuma ile yapılmamalıdır. Çünkü her byte okuması için prosesin kernel moda geçmesi zaman kaybı oluşturmaktadır. 
+	Belli bir karakter ya da karakter kümesi görülene kadar soketten okuma işleminin nasıl yapılması gerektiği izleyen 
+	paragraflarda açıklanacaktır. 
+
+	Yazının sonunun tespit edilmesi için kullanılabilecek diğer bir yöntem de baştan yazının uzunluğunun iletilmesi olabilir. 
+	Örneğin:
+
+	"ADD op1 op2"
+
+	Mesajı için önce bu yazının uzunluğu karşı tarafa iletilebilir. Sonra yazı gönderilir. Okuyan taraf da yazının hepsini
+	belirtilen uzunlukta okuma yaparak elde edebilir. 
+
+	Yazının sonuna belli bir karakter yerleştirerek o kadar görene kadar etkin okuma yapmak için şöyle bir teknik kullanılmaktadır:
+	Karakterler soketten tek tek okunmaz. Blok blok okunurak bir tampona yerleştirilir. Sonra bu tampondan karakterler elde edilir. 
+	Tabii blok okuması yapıldığında birden fazla satır tamponda bulunabilecektir. Bu durumda okuma sırasında tamponda nerede 
+	kalındığının da tutulması gerekir. Bu işlemi yapan klasik bir algoritma "Effective TCI/IP Programming" kitabında verilmiştir. 
+	Aşağıda bu biçimde CR/LF çifti görülene kadar soketten etkin bir biçimde yukarıda belirttiğimiz gibi okuma yapan bir fonksiyon 
+	örneği veriyoruz:
+
+	ssize_t sock_readline(int sock, char *str, size_t size)
+	{
+		char *bstr = str;
+		static char *bp;
+		static ssize_t count = 0;
+		static char buf[2048];
+		
+		if (size <= 2) {
+			errno = EINVAL;
+			return -1;
+		}
+			
+		while (--size > 0) {
+			if (--count <= 0) {
+				if ((count = recv(sock, buf, sizeof(buf), 0)) == -1)
+					return -1;
+				if (count == 0)
+					return 0;
+				bp = buf;
+			}
+			*str++ = *bp++;
+			if (str[-1] == '\n')
+				if (str - bstr > 1 && str[-2] == '\r') {
+					*str = '\0';
+					break;
+				}
+		}
+
+		return (ssize_t) (str - bstr);
+	}
+
+	Fonksiyonun birinci parametresi okuma yapılacak soketi ikinci ve üçüncü parametreleri okunacak satırım yerleştirileceği 
+	dizinin adresini ve uzunluğunu almaktadır. Buradaki dizinin sonunda her zaman CR/LF ve null karakter bulunacaktır. Fonksiyon 
+	başarı durumunda dizie yerleştirilen karakter sayısı ile (CR/LF dahil) geri dönmektedir. Karşı taraf soketi kapatmışsa 
+	ve hiçbir okuma yapılamamışsa bu durumda fonksiyon 0 ile geri dönmektedir. Bu durumda programcının verdiği dizinin içeriği 
+	kullanılmamalıdır. Mesajın sonunda CR/LF çifti olmadıktan sonra fonksiyon başarılı okuma yapmamaktadır. Fonksiyon başarısızlık 
+	durumunda -1 değerine geri döner ve errno uygun biçimde set edilir. Burada yazmış olduğumuz sock_readline fonksiyonu bir 
+	satır okunan kadar blokeye yol açmaktadır. Dolayısıyla çok client'lı server uygulamalarında select, poll ve epoll gibi modellerde
+	bu fonksiyon bu haliyle kullanılamaz. Örneğin biz select fonksiyonunda bir grup soketi bekliyor olalım. Bir sokete bir satırın 
+	yarısı gelmiş olabilir. Bu durumda biz read_line fonksiyonu çağırırsak bloke oluşacaktır. Tabii gerçi satırın geri kalan kısmı 
+	zaten kısa bir süre sonra gelecek olsa da bu durum yine bir kusur oluşturacaktır.
+
+	UNIX/Linux, macOS ve Windows sistemlerinde yalnızca CR ('\r) karakteri imleci bulunulan satırın başına geçirmektedir. Dolayısıyla 
+	bir yazının sonunda CR/LF çifti varsa yazının ekrana bastırılmasında bir sorun oluşmayacaktır. Çünki önce CR karakteri 
+	imleci bulunulan satırın abşına geçirecek sonra LF karakteri aşağı satırın başına geçirecektir. Böylece yazının sonunda LF
+	karakterinin bulunmasıyla CR/LF karakterlerinin bulunması arasında bir fark oluşmayacaktır. 
+
+	Aşağıdaki örnekte client program server programa CR/LF ile sonlandırılmış bir yazı göndermektedir. Server program da bu yazıyı 
+	yukarıdaki sock_readline fonksiyonunu kullanarak okuyup ekrana (stdout dosyasına) yazdırmaktadır.
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/* server.c */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#define DEF_SERVER_PORT		55555
+#define BUFFER_SIZE			4096
+
+ssize_t sock_readline(int sock, char *str, size_t size);
+void exit_sys(const char *msg);
+
+/* ./server [-p port] */
+
+int main(int argc, char *argv[])
+{
+	int server_sock, client_sock;
+	struct sockaddr_in sin_server, sin_client;
+	socklen_t sin_len;
+	char buf[BUFFER_SIZE + 1];
+    char ntopbuf[INET_ADDRSTRLEN];
+	ssize_t result;
+	int option;
+	int server_port;
+	int p_flag, err_flag;
+	
+	p_flag = err_flag = 0;
+
+	opterr = 0;
+	while ((option = getopt(argc, argv, "p:")) != -1) {
+		switch (option) {
+			case 'p':
+				p_flag = 1;
+				server_port = atoi(optarg);
+				break;
+			case '?':
+				if (optopt == 'p')
+					fprintf(stderr, "-%c option must have an argument!\n", optopt);
+				else
+					fprintf(stderr, "-%c invalid option!\n", optopt);
+				err_flag = 1;
+		}
+	}
+
+	if (err_flag)
+		exit(EXIT_FAILURE);
+
+	if (optind - argc != 0) {
+		fprintf(stderr, "too many arguments!..\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if (!p_flag)
+		server_port = DEF_SERVER_PORT;
+
+	if ((server_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+		exit_sys("socket");
+
+	sin_server.sin_family = AF_INET;
+	sin_server.sin_port = htons(server_port);
+	sin_server.sin_addr.s_addr = htonl(INADDR_ANY);
+
+	if (bind(server_sock, (struct sockaddr *)&sin_server, sizeof(sin_server)) == -1)
+		exit_sys("bind");
+
+	if (listen(server_sock, 8) == -1)
+		exit_sys("listen");
+
+	printf("listening port %d\n", server_port);
+
+	printf("waiting for connection...\n");
+	sin_len = sizeof(sin_client);
+	if ((client_sock = accept(server_sock, (struct sockaddr *)&sin_client, &sin_len)) == -1)
+		exit_sys("accept");
+
+	printf("connected client ===> %s : %u\n", inet_ntop(AF_INET, &sin_client.sin_addr, ntopbuf, INET_ADDRSTRLEN), (unsigned)ntohs(sin_client.sin_port));    
+
+	for (;;) {
+		if ((result = sock_readline(client_sock, buf, BUFFER_SIZE)) == -1)
+			exit_sys("sock_readline");
+		if (result == 0)
+			break;
+		if (!strcmp(buf, "quit\r\n"))
+			break;
+		buf[strlen(buf) - 2] = '\0';
+		printf("%jd byte(s) received: \"%s\"\n", (intmax_t)result, buf);
+	}
+	
+	shutdown(client_sock, SHUT_RDWR);
+	close(client_sock);
+
+	close(server_sock);
+
+	return 0;
+}
+
+ssize_t sock_readline(int sock, char *str, size_t size)
+{
+	char *bstr = str;
+	static char *bp;
+	static ssize_t count = 0;
+	static char buf[2048];
+	
+	if (size <= 2) {
+		errno = EINVAL;
+		return -1;
+	}
+		
+	while (--size > 0) {
+		if (--count <= 0) {
+			if ((count = recv(sock, buf, sizeof(buf), 0)) == -1)
+				return -1;
+			if (count == 0)
+				return 0;
+			bp = buf;
+		}
+		*str++ = *bp++;
+		if (str[-1] == '\n')
+			if (str - bstr > 1 && str[-2] == '\r') {
+				*str = '\0';
+				break;
+			}
+	}
+
+	return (ssize_t) (str - bstr);
+}
+
+void exit_sys(const char *msg)
+{
+	perror(msg);
+
+	exit(EXIT_FAILURE);
+}
+
+/* client.c */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
+#define DEF_SERVER_NAME		"127.0.0.1"
+#define DEF_SERVER_PORT		"55555"
+#define BUFFER_SIZE			4096
+
+void exit_sys(const char *msg);
+
+/* ./client [-s server] [-p port] */
+
+int main(int argc, char *argv[])
+{
+	int client_sock;
+	struct sockaddr_in sin_client;
+	struct addrinfo hints = {0, AF_INET, SOCK_STREAM};
+    struct addrinfo *res, *ri;
+    int gai_result;
+	char buf[BUFFER_SIZE];
+	char *str;
+	int option;
+	int s_flag, p_flag, b_flag, err_flag;
+	const char *server_name;
+	int bind_port;
+    const char *server_port;
+
+	s_flag = p_flag = b_flag = err_flag = 0;
+
+	opterr = 0;
+	while ((option = getopt(argc, argv, "s:p:b:")) != -1) {
+		switch (option) {
+			case 's':
+				s_flag = 1;
+				server_name = optarg;
+				break;
+			case 'p':
+				p_flag = 1;
+				server_port = optarg;
+				break;
+			case 'b':
+				b_flag = 1;
+				bind_port = atoi(optarg);
+				break;
+			case '?':
+				if (optopt == 's' || optopt == 'p' || optopt == 'b')
+					fprintf(stderr, "-%c option must have an argument!\n", optopt);
+				else
+					fprintf(stderr, "-%c invalid option!\n", optopt);
+				err_flag = 1;
+		}
+	}
+
+	if (err_flag)
+		exit(EXIT_FAILURE);
+
+	if (optind - argc != 0) {
+		fprintf(stderr, "too many arguments!..\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if (!s_flag)
+		server_name = DEF_SERVER_NAME;
+	if (!p_flag)
+		server_port = DEF_SERVER_PORT;
+
+	if ((client_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+		exit_sys("socket");
+
+	if (b_flag) {
+		sin_client.sin_family = AF_INET;
+		sin_client.sin_port = htons(bind_port);
+		sin_client.sin_addr.s_addr = htonl(INADDR_ANY);
+
+		if (bind(client_sock, (struct sockaddr *)&sin_client, sizeof(sin_client)) == -1)
+			exit_sys("bind");
+	}
+
+    if ((gai_result = getaddrinfo(server_name, server_port, &hints, &res)) != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(gai_result));
+        exit(EXIT_FAILURE);
+    }
+
+    for (ri = res; ri != NULL; ri = ri->ai_next) 
+        if (connect(client_sock, ri->ai_addr, ri->ai_addrlen) != -1)
+		    break;
+    
+    if (ri == NULL) 
+        exit_sys("connect");
+
+    freeaddrinfo(res);
+
+ 	printf("connected server...\n");
+
+	for (;;) {
+		printf("csd>");
+		fflush(stdout);
+
+		if (fgets(buf, BUFFER_SIZE, stdin) == NULL)
+			continue;
+		if ((str = strchr(buf, '\n')) != NULL)
+			*str = '\0';
+
+		strcat(str, "\r\n");
+
+		if (send(client_sock, buf, strlen(buf), 0) == -1)
+			exit_sys("send");
+		if (!strcmp(buf, "quit\r\n"))
+			break;
+	}
+
+	shutdown(client_sock, SHUT_RDWR);
+	close(client_sock);
+
+	return 0;
+}
+
+void exit_sys(const char *msg)
+{
+	perror(msg);
+
+	exit(EXIT_FAILURE);
+}
+
+/*--------------------------------------------------------------------------------------------------------------------------
+	Pekiyi dört işlem yapan bir client/server uygulama yazmak isteyelim. Bu multi-client bir uygulama olsun. Bunun için 
+	thread modelini kullanalım. (Çünkü bu tür uygulamalarda diğer modeller kullanılırken dikkat açıklamamız gereken başka 
+	noktalar vardır. Diğer modellerde soketten okunan bilgilerin biriktirilmesi gerekmektedir. Bu biriktirmenin nasıl yapılabileceğni
+	izleyen paragraflarda açıklayacağız.)
+
+	Uygulama katmanı protokellerinde genel olarak client'ın server'a her gönderdiği mesaj için server client'a bir yanıt verir. 
+	Bu yanıt olumlu ise istenen işlemin yanıtıdır. Olumsuz ise bir hata yanıtıdır.  Bu tür protokollerde protokolü tasarlayan baştan 
+	client'ın server'a server'ın da client'a göndereceği mesajları belirlemelidir. 
+	
+	Dört işlem client/server programımızda client'ın server'a göndereceği mesajlar şunlar olabilir:
+
+	"LOGIN <user_name> <password>CT/LF"
+	"ADD op1 op2CR/LF"
+	"SUB op1 op2CR/LF"
+	"MUL op1 op2CR/LF"
+	"DIV op1 op2CR/LF"
+	"LOGOUTCR/LF"
+
+	Server'ın client'a gnderdiği mesajlar da şunlar olabilir:
+
+	"LOGIN_ACCEPTEDCR/LF"
+	"RESULT resultCR/LF"
+	"ERROR messageCR/LF"
+
+	Bu tür uygulama katmanı protokollerinde fiziksel bağlantı ile mantıksal bağlantının karıştırılmaması gerekir. Bir client'ın
+	server'a connect fonksiyonuyla bağlanması onun hizmet alacağı anlamına gelmemektedir. Onun hizmet alabilmesi için mantıksal 
+	bir bağlantının da sağlanması gerekir. Bizim protokolümüzde bu mantıksal bağlantı "LOGIN" ve "LOGIN_ACCEPTED" mesajlarıyla
+	yapılmaktadır. Client TCP'den bağlandıktan sonra server'a kullanıcı adını ve parolayı yollar. Server doğrulamayı yaparsa 
+	client'a "LOGIN ACCEPTEDCR/LF" mesajını iletir. Eğer server doğrulamayı yapamazsa bu durumda örneğin "ERROR LOGIN_FAILEDCR/LF"
+	gibi bir hata mesajıyla geri dönüp soketi kapatacaktır.
+	
+	<BURADA KALDIK>
+
+	Aşağıdaki program tam değil
 
 ---------------------------------------------------------------------------------------------------------------------------*/
+
+/* server.c */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <errno.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#define DEF_SERVER_PORT		55555
+#define BUFFER_SIZE			4096
+#define MAX_MSG_PARAMS      32
+
+typedef struct tagCLIENT_INFO {
+	int sock;
+	struct sockaddr_in sin;
+} CLIENT_INFO;
+
+typedef struct MSG {
+    char *params[MAX_MSG_PARAMS];
+    int count;
+} MSG;
+
+typedef struct tagCLIENT_MSG_PROC {
+    char *msg;
+    void (*proc)(void);
+} CLIENT_MSG_PROC;
+
+void *client_thread_proc(void *param);
+ssize_t sock_readline(int sock, char *str, size_t size);
+void parse_msg(char *msg, MSG *msgs);
+void login_proc(void);
+void sub_proc(void);
+void mul_proc(void);
+void logout_proc(void);
+
+char *revstr(char *str);
+void exit_sys(const char *msg);
+
+CLIENT_MSG_PROC g_client_msgs[] = {
+    {"LOGIN", login_proc},
+    {"SUB", sub_proc},
+    {"MUL", mul_proc},
+    {"LOGOUT", logout_proc},{NULL, NULL}
+};
+
+/* ./server [-p port] */
+
+int main(int argc, char *argv[])
+{
+	int server_sock, client_sock;
+	struct sockaddr_in sin_server, sin_client;
+	socklen_t sin_len;
+	char ntopbuf[INET_ADDRSTRLEN];
+	int option;
+	int server_port;
+	int p_flag, err_flag;
+    pthread_t tid;
+	CLIENT_INFO *ci;
+	int result;
+		
+	p_flag = err_flag = 0;
+
+	opterr = 0;
+	while ((option = getopt(argc, argv, "p:")) != -1) {
+		switch (option) {
+			case 'p':
+				p_flag = 1;
+				server_port = atoi(optarg);
+				break;
+			case '?':
+				if (optopt == 'p')
+					fprintf(stderr, "-%c option must have an argument!\n", optopt);
+				else
+					fprintf(stderr, "-%c invalid option!\n", optopt);
+				err_flag = 1;
+		}
+	}
+
+	if (err_flag)
+		exit(EXIT_FAILURE);
+
+	if (optind - argc != 0) {
+		fprintf(stderr, "too many arguments!..\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if (!p_flag)
+		server_port = DEF_SERVER_PORT;
+
+	if ((server_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+		exit_sys("socket");
+
+	sin_server.sin_family = AF_INET;
+	sin_server.sin_port = htons(server_port);
+	sin_server.sin_addr.s_addr = htonl(INADDR_ANY);
+
+	if (bind(server_sock, (struct sockaddr *)&sin_server, sizeof(sin_server)) == -1)
+		exit_sys("bind");
+
+	if (listen(server_sock, 8) == -1)
+		exit_sys("listen");
+
+	printf("listening port %d\n", server_port);
+
+    for (;;) {
+        printf("waiting for connection...\n");
+        sin_len = sizeof(sin_client);
+        if ((client_sock = accept(server_sock, (struct sockaddr *)&sin_client, &sin_len)) == -1)
+            exit_sys("accept");
+     
+        printf("connected client ===> %s : %u\n", inet_ntop(AF_INET, &sin_client.sin_addr, ntopbuf, INET_ADDRSTRLEN), (unsigned)ntohs(sin_client.sin_port));   
+
+		if ((ci = (CLIENT_INFO *)malloc(sizeof(CLIENT_INFO))) == NULL) {
+			fprintf(stderr, "cannot allocate memory!..\n");
+			exit(EXIT_FAILURE);
+		}
+
+		ci->sock = client_sock;
+		ci->sin = sin_client;
+
+		if ((result = pthread_create(&tid, NULL, client_thread_proc, ci)) != 0) {
+			fprintf(stderr, "pthread_create: %s\n", strerror(result));
+			exit(EXIT_FAILURE);
+		}
+
+		if ((result = pthread_detach(tid)) != 0) {
+			fprintf(stderr, "pthread_detach: %s\n", strerror(result));
+			exit(EXIT_FAILURE);
+		}
+    }
+	
+	close(server_sock);
+
+	return 0;
+}
+
+void *client_thread_proc(void *param)
+{
+    char buf[BUFFER_SIZE  + 1];				// BUFFER_SIZE is enough
+    char ntopbuf[INET_ADDRSTRLEN];
+    unsigned port;
+    ssize_t result;
+	CLIENT_INFO *ci = (CLIENT_INFO *)param;
+    MSG msg;
+    int i;
+
+    inet_ntop(AF_INET, &ci->sin.sin_addr, ntopbuf, INET_ADDRSTRLEN);
+    port = (unsigned)ntohs(ci->sin.sin_port);
+
+   	for (;;) {
+        if ((result = sock_readline(ci->sock, buf, BUFFER_SIZE)) == -1)
+            exit_sys("sock_readline");
+        if (result == 0) {
+            fprintf(stderr, "client unexpectedly down...\n");
+            exit(EXIT_FAILURE);
+        }
+
+        parse_msg(buf, &msg);
+
+        for (i = 0; g_client_msgs[i].msg != NULL; ++i)
+            if (!strcmp(g_client_msgs[i].msg, msg.params[0])) {
+                g_client_msgs[i].proc();
+                break;
+            }    
+	}
+
+    printf("client disconnected %s : %u\n", ntopbuf, port);    
+
+	shutdown(ci->sock, SHUT_RDWR);
+	close(ci->sock);
+
+	free(ci);
+
+	return NULL;
+}
+
+void parse_msg(char *buf, MSG *msg)
+{
+    char *str;
+
+    msg->count = 0;
+    for (str = strtok(buf, " \r\n\t"); str != NULL; str = strtok(NULL, " \r\n\t")) 
+        msg->params[msg->count++] = str;
+    
+    msg->params[msg->count] = NULL;
+}
+
+ssize_t sock_readline(int sock, char *str, size_t size)
+{
+	char *bstr = str;
+	static char *bp;
+	static ssize_t count = 0;
+	static char buf[2048];
+	
+	if (size <= 2) {
+		errno = EINVAL;
+		return -1;
+	}
+		
+	while (--size > 0) {
+		if (--count <= 0) {
+			if ((count = recv(sock, buf, sizeof(buf), 0)) == -1)
+				return -1;
+			if (count == 0)
+				return 0;
+			bp = buf;
+		}
+		*str++ = *bp++;
+		if (str[-1] == '\n')
+			if (str - bstr > 1 && str[-2] == '\r') {
+				*str = '\0';
+				break;
+			}
+	}
+
+	return (ssize_t) (str - bstr);
+}
+
+void login_proc(void)
+{
+    printf("LOGIN...\n");
+}
+
+void sub_proc(void)
+{
+    printf("SUB...\n");
+}
+
+void mul_proc(void)
+{
+    printf("MUL...\n");
+}
+
+void logout_proc(void)
+{
+    printf("LOGOUT...\n");
+}
+
+char *revstr(char *str)
+{
+    size_t i, k;
+    char temp;
+
+    for (i = 0; str[i] != '\0'; ++i)
+        ;
+    
+    for (--i, k = 0;  k < i; ++k, --i) {
+        temp = str[k];
+        str[k] = str[i];
+        str[i] = temp;
+    }
+
+    return str;
+}
+
+void exit_sys(const char *msg)
+{
+	perror(msg);
+
+	exit(EXIT_FAILURE);
+}
+
+
+/* client.c */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
+#define DEF_SERVER_NAME		"127.0.0.1"
+#define DEF_SERVER_PORT		"55555"
+#define BUFFER_SIZE			4096
+
+void exit_sys(const char *msg);
+ssize_t sock_readline(int sock, char *str, size_t size);
+
+/* ./client [-s server] [-p port] */
+
+int main(int argc, char *argv[])
+{
+	int client_sock;
+	struct sockaddr_in sin_client;
+	struct addrinfo hints = {0, AF_INET, SOCK_STREAM};
+    struct addrinfo *res, *ri;
+    int gai_result;
+	char buf[BUFFER_SIZE];
+	char *str;
+	int option;
+	int s_flag, p_flag, b_flag, err_flag;
+	const char *server_name;
+	int bind_port;
+    const char *server_port;
+    ssize_t result;
+
+	s_flag = p_flag = b_flag = err_flag = 0;
+
+	opterr = 0;
+	while ((option = getopt(argc, argv, "s:p:b:")) != -1) {
+		switch (option) {
+			case 's':
+				s_flag = 1;
+				server_name = optarg;
+				break;
+			case 'p':
+				p_flag = 1;
+				server_port = optarg;
+				break;
+			case 'b':
+				b_flag = 1;
+				bind_port = atoi(optarg);
+				break;
+			case '?':
+				if (optopt == 's' || optopt == 'p' || optopt == 'b')
+					fprintf(stderr, "-%c option must have an argument!\n", optopt);
+				else
+					fprintf(stderr, "-%c invalid option!\n", optopt);
+				err_flag = 1;
+		}
+	}
+
+	if (err_flag)
+		exit(EXIT_FAILURE);
+
+	if (optind - argc != 0) {
+		fprintf(stderr, "too many arguments!..\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if (!s_flag)
+		server_name = DEF_SERVER_NAME;
+	if (!p_flag)
+		server_port = DEF_SERVER_PORT;
+
+	if ((client_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+		exit_sys("socket");
+
+	if (b_flag) {
+		sin_client.sin_family = AF_INET;
+		sin_client.sin_port = htons(bind_port);
+		sin_client.sin_addr.s_addr = htonl(INADDR_ANY);
+
+		if (bind(client_sock, (struct sockaddr *)&sin_client, sizeof(sin_client)) == -1)
+			exit_sys("bind");
+	}
+
+    if ((gai_result = getaddrinfo(server_name, server_port, &hints, &res)) != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(gai_result));
+        exit(EXIT_FAILURE);
+    }
+
+    for (ri = res; ri != NULL; ri = ri->ai_next) 
+        if (connect(client_sock, ri->ai_addr, ri->ai_addrlen) != -1)
+		    break;
+    
+    if (ri == NULL) 
+        exit_sys("connect");
+
+    freeaddrinfo(res);
+
+ 	printf("connected server...\n");
+
+	for (;;) {
+		printf("csd>");
+		fflush(stdout);
+
+		if (fgets(buf, BUFFER_SIZE, stdin) == NULL)
+			continue;
+		if ((str = strchr(buf, '\n')) != NULL)
+			*str = '\0';
+
+		strcat(str, "\r\n");
+
+		if (send(client_sock, buf, strlen(buf), 0) == -1)
+			exit_sys("send");
+        
+        if ((result = sock_readline(client_sock, buf, BUFFER_SIZE)) == -1)
+            exit_sys("sock_readline");
+        if (result == 0) {
+            fprintf(stderr, "server unexpectedly down...\n");
+            exit(EXIT_FAILURE);
+        }
+        printf("%s", buf);
+	}
+
+	shutdown(client_sock, SHUT_RDWR);
+	close(client_sock);
+
+	return 0;
+}
+
+void exit_sys(const char *msg)
+{
+	perror(msg);
+
+	exit(EXIT_FAILURE);
+}
+
+ssize_t sock_readline(int sock, char *str, size_t size)
+{
+	char *bstr = str;
+	static char *bp;
+	static ssize_t count = 0;
+	static char buf[2048];
+	
+	if (size <= 2) {
+		errno = EINVAL;
+		return -1;
+	}
+		
+	while (--size > 0) {
+		if (--count <= 0) {
+			if ((count = recv(sock, buf, sizeof(buf), 0)) == -1)
+				return -1;
+			if (count == 0)
+				return 0;
+			bp = buf;
+		}
+		*str++ = *bp++;
+		if (str[-1] == '\n')
+			if (str - bstr > 1 && str[-2] == '\r') {
+				*str = '\0';
+				break;
+			}
+	}
+
+	return (ssize_t) (str - bstr);
+}
 
 /*--------------------------------------------------------------------------------------------------------------------------
 
