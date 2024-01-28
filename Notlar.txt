@@ -17595,8 +17595,6 @@ void exit_sys(const char *msg)
     açmış olduğumuz dosyanın betimleyicisini verebiliriz. Offset olarak da dosyanın neresini map edeceksek oranın başlangıç offsetini 
     verebiliriz. Mapping sırasında dosya göstericisinin konumunun bir önemi yoktur. Örneğin:
 
-	<BURADA KALDIK>
-
     char *maddr;
     struct stat finfo;
     ...
@@ -43173,8 +43171,6 @@ void exit_sys(const char *msg)
 	exit(EXIT_FAILURE);
 }
 
-/* server.c */
-
 /* client.c */
 
 #include <stdio.h>
@@ -43311,8 +43307,6 @@ void exit_sys(const char *msg)
 
 	exit(EXIT_FAILURE);
 }
-
-/* client.c */
 
 /*--------------------------------------------------------------------------------------------------------------------------
     Multi-client server uygulamaları için diğer model de select modelidir. Biz daha önce bu modeli zaten görmüştük ve borular
@@ -47801,37 +47795,682 @@ void exit_sys(const char *msg)
 
 ---------------------------------------------------------------------------------------------------------------------------*/
 
-<BURADA KALDIK>
+/*--------------------------------------------------------------------------------------------------------------------------
+                                            114. Ders 26/01/2024 - Cuma
+---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
-    SO_REUSEADDR seçeneği belli bir port için bind işlemi yapmış bir server'ın sonlanması sonucunda bu server'ın yeniden çalıştırılıp
-    aynı portu bind edebilmesi için kullanılmaktadır. Bir portu bind eden server, bir client ile bağlandıktan sonra çökerse, ya da her hangi
-    bir biçimde sonlanırsa işletim sistemleri o portun yeniden belli bir süre bind edilmesini engellemektedir. Bunun nedeni eski çalışan server ile
-    yeni çalışacak olan server'ın göndereceği ve alacağı paketlerin karışabilme olasılığıdır. Eski paketlerin ağda maksimum bir geçerlilik süresi vardır. 
-    İşletim sistemi de bunun iki katı kadar bir süre (2 dakika civarı, neden iki katı olduğu protokolün aşağı seviyeli çalışması ile ilgilidir) bu protun yeniden
-    bind edilmesini engellemktedir. İşte eğer bu soket seçeneği kullanılırsa artık sonlanan ya da çöken bir server hemen yeniden çalıiştırıldığında
-    bind işlemi sırasında "Address already in use" biçiminde bir hata ile karşılaşılmayacaktır. Örneğin:
-    
+    SO_REUSEADDR seçeneği belli bir port için bind işlemi yapmış bir server'ın client bağlantısı sağladıktan sonra sonlanması 
+    sonucunda bu server'ın yeniden çalıştırılıp aynı portu bind edebilmesi için kullanılmaktadır. Bir portu bind eden server, 
+    bir client ile bağlandıktan sonra çökerse, ya da her hangi bir biçimde sonlanırsa işletim sistemleri o portun yeniden belli 
+    bir süre bind edilmesini engellemektedir. Bunun nedeni eski çalışan server ile yeni çalışacak olan server'ın göndereceği 
+    ve alacağı paketlerin karışabilme olasılığıdır. Eski bağlantıda yollanmış olan paketlerin ağda maksimum bir geçerlilik süresi 
+    vardır. İşletim sistemi de bunun iki katı kadar bir süre (2 dakika civarı, neden iki katı olduğu protokolün aşağı seviyeli 
+    çalışması ile ilgilidir) bu protun yeniden bind edilmesini engellemktedir. İşte eğer SO_REUSEADDR soket seçeneği kullanılırsa 
+    artık sonlanan ya da çöken bir server hemen yeniden çalıştırıldığında bind işlemi sırasında "Address already in use" biçiminde 
+    bir hata ile karşılaşılmayacaktır. Bu soket seçeneğini aşağıdaki gibi setsockopt fonksiyonu ile set edebiliriz:
+       
     int sockapt = 1;
     ...
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof(sockopt)) == -1)
        exit_sys("setsockopt");
 
-    SO_REUSEADDR seçeneğini set etmek için int bir nesne alıp onun içerisine sıfır dışı bir değer yerleştirip, onun adresini setsockopt fonksiyonunun dördünceü
-    parametresine girmek gerekir. Bu nesneye 0 girip fonksiyonu çağırırsak bu özelliği kapatmış oluruz. Fonksiyonun dördüncü parametresine adresi girilecek nesnenin
-    seçeneğe göree değişebileceğine dikkat ediniz. 
+    SO_REUSEADDR seçeneğini set etmek için int bir nesne alıp onun içerisine sıfır dışı bir değer yerleştirip, onun adresini 
+    setsockopt fonksiyonunun dördüncü parametresine girmek gerekir. Bu nesneye 0 girip fonksiyonu çağırırsak bu özelliği kapatmış 
+    oluruz. 
 
-    SO_REUSEADDR bayrağı daha önce başka bir program tarafındna bind edilmiş soketin ikinci kez diğer bir program tarafından bind edilmesi için kullanılmamaktadır. 
-    Eğer böyle bir ihtiyaç varsa (nadiren olabilir) Linux'ta (fakat POSIX'te değil) SO_REUSEPORT soket seçeneği kullanılmalıdır. Bu soket seçeneği benzer biçimde 
-    Windows sistemlerinde SO_EXCLUSIVEADDRUSE biçimindedir. 
+    SO_REUSEADDR bayrağı daha bir program tarafından bind edilmiş soketin ikinci kez diğer bir program tarafından bind edilmesi 
+    için kullanılmamaktadır.  Eğer böyle bir ihtiyaç varsa (nadiren olabilir) Linux'ta (fakat POSIX'te değil) SO_REUSEPORT 
+    soket seçeneği kullanılmalıdır. Bu soket seçeneği benzer biçimde Windows sistemlerinde SO_EXCLUSIVEADDRUSE biçimindedir. 
+    Yani bu soket seçenekleri kullanıldığında aynı port birden fazla server tarafından bind edilip aynı anda kullanılabilir. 
+    Bu bayraklarla birden fazla proses aynı portu bind ettiğinde bir client'tan bu porta connect işlemi yapıldığı zaman işletim
+    sistemi belli bir load balancing yaparak bağlantının server'lardan biri tarafındna kabul edilmesini sağlayacaktır.
 
     Aşağıdaki server programını client ile bağlandıktan sonra Ctrl+C ile sonlandırınız. Sonra yeniden çalıştırmaya çalışınız. 
     SO_REUSEADDR seçeneği kullanıldığından dolayı bir sorun ile karşılaşılmayacaktır. Daha sonra server programdan o kısmı
-     silerek yeniden denemeyi yapınız.
----------------------------------------------------------------------------------------------------------------------------*/
-/*--------------------------------------------------------------------------------------------------------------------------
+    silerek yeniden denemeyi yapınız. Örneğimizdeki client ptogram server adresini ve port numarasını, server program ise 
+    yalnızca port numarasını komut satırı argümanı olarak almaktadır. Programları farklı terminallerde aşağıdaki gibi 
+    çalıştırabilirsiniz:
 
+    ./server 55555
+    ./client localhost 555555
 ---------------------------------------------------------------------------------------------------------------------------*/
+
+/* server.c */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#define BUFFER_SIZE     1024
+
+void exit_sys(const char *msg);
+
+int main(int argc, char *argv[])
+{
+    int sock, sock_client;
+    struct sockaddr_in sinaddr, sinaddr_client;
+    socklen_t sinaddr_len;
+    char ntopbuf[INET_ADDRSTRLEN];
+    in_port_t port;
+    ssize_t result;
+    char buf[BUFFER_SIZE + 1];
+    int sockopt = 1;
+
+    if (argc != 2) {
+        fprintf(stderr, "wrong number of arguments!..\n");
+        exit(EXIT_FAILURE);
+    }
+
+    port = (in_port_t)strtoul(argv[1], NULL, 10);
+
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+        exit_sys("socket");
+
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof(sockopt)) == -1)
+        exit_sys("setsockopt");
+
+    sinaddr.sin_family = AF_INET;
+    sinaddr.sin_port = htons(port);
+    sinaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    if (bind(sock, (struct sockaddr *)&sinaddr, sizeof(sinaddr)) == -1)
+        exit_sys("bind");
+
+    if (listen(sock, 8) == -1)
+        exit_sys("listen");
+
+    printf("Waiting for connection...\n");
+    
+    sinaddr_len = sizeof(sinaddr_client);
+    if ((sock_client = accept(sock, (struct sockaddr *)&sinaddr_client, &sinaddr_len)) == -1)
+        exit_sys("accept");
+
+    printf("Connected: %s : %u\n", inet_ntop(AF_INET, &sinaddr_client, ntopbuf, INET_ADDRSTRLEN), (unsigned)ntohs(sinaddr_client.sin_port));    
+
+    for (;;)  {
+        if ((result = recv(sock_client, buf, BUFFER_SIZE, 0)) == -1)
+            exit_sys("recv");
+        if (result == 0)
+            break;
+        buf[result] = '\0';
+        if (!strcmp(buf, "quit"))
+            break;
+        printf("%ld bytes received from %s (%u): %s\n", (long)result, ntopbuf, (unsigned)ntohs(sinaddr_client.sin_port), buf);
+    }
+   
+    shutdown(sock_client, SHUT_RDWR);
+    close(sock_client);
+    close(sock);
+    
+    return 0;
+}
+
+void exit_sys(const char *msg)
+{
+    perror(msg);
+
+    exit(EXIT_FAILURE);
+}
+
+/* client.c */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
+#define BUFFER_SIZE        1024
+
+void exit_sys(const char *msg);
+
+int main(int argc, char *argv[])
+{
+    int sock;
+    struct addrinfo *ai, *ri;
+    struct addrinfo hints = {0};
+    char buf[BUFFER_SIZE];
+    char *str;
+    int result;
+    
+    if (argc != 3) {
+        fprintf(stderr, "wrong number of arguments!..\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+        exit_sys("socket");
+
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+
+    if ((result = getaddrinfo(argv[1], argv[2], &hints, &ai)) != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(result));
+        exit(EXIT_FAILURE);
+    }
+
+    for (ri = ai; ri != NULL; ri = ri->ai_next) 
+        if (connect(sock, ri->ai_addr, ri->ai_addrlen) != -1) 
+            break;
+    
+    if (ri == NULL)
+        exit_sys("connect");
+
+    freeaddrinfo(ai);
+
+    printf("Connected...\n");
+
+    for (;;) {
+        printf("Yazı giriniz:");
+        if (fgets(buf, BUFFER_SIZE, stdin) == NULL)
+			continue;
+        if ((str = strchr(buf, '\n')) != NULL)
+            *str = '\0';
+         if (!strcmp(buf, "quit"))
+            break;
+
+        if ((send(sock, buf, strlen(buf), 0)) == -1)
+            exit_sys("send");
+    }
+
+    shutdown(sock, SHUT_RDWR);
+    close(sock);
+    
+    return 0;
+}
+
+void exit_sys(const char *msg)
+{
+    perror(msg);
+
+    exit(EXIT_FAILURE);
+}
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    OOB Verisi (Out-Of_Band Data) bazı stream protokollerinde olan bir özelliktir. Örneğin TCP protokolü OOB verisini 1 byte 
+    olarak desteklemektedir. OOB verisine TCP'de "Acil (Urgent)" veri de denilmektedir. Bunun amacı OOB verisinin normal stream 
+    sırasında değil daha önce gönderilenlerin -eğer hedef host'ta henüz onlar okunmamışsa- önünde ele alınabilmesidir. Yani biz 
+    TCP'de birtakım verileri gönderdikten sonra OOB verisini gönderirsek bu veri önce göndermiş olduklarımızdan daha önde işleme 
+    sokulabilir. Böylece OOB verisi uygulamalarda önce gönderilen birtakım b ilgilerin iptal edilmesi gibi gerekçelerle kullanılabilmektedir. 
+
+    OOB verisini gönderebilmek için send fonksiyonunun flags parametresine MSG_OOB bayrağını girmek gerekir. Tabii TCP yalnızca 
+    1 byte uzunluğunda OOB verisinin gönderilmesine izin vermektedir. Bu durumda eğer send ile birden fazla byte MSG_OOB bayrağı 
+    ile gönderilmek istenirse gönderilenlerin yalnızca son byte'ı OOB olarak gönderilir. Son byte'tan önceki tüm byte'lar normak 
+    veri olarak gönderilmektedir. 
+
+    Normal olarak OOB verisi recv fonksiyonunda MSG_OOB bayrağı ile alınmaktadır. Ancak bu bayrak kullanılarak recv çağrıldığında 
+    eğer bir OOB verisi sırada yoksa recv başarısız olmaktadır. recv fonksiyonun MSG_OOB bayraklı çağrısında başarılı olabilmesi 
+    için o anda bir OOB verisinin gelmiş olması gerekir. Pekiyi OOB verisinin geldiğini nasıl anlarız? İşte tipik yöntem SIGURG 
+    sinyalinin kullanılmasıdır. Çünkü sokete bir OOB verisi geldiğinde işletim sistemi SIGURG sinyali oluşturabilmektedir. Bu sinyalin 
+    default durumu IGNORE biçimindedir. (Yani ilgili proses eğer bu sinyali set etmemişse sanki sinyal oluşmamış gibi bir davranış 
+    gözükür.) Ancak default olarak OOB verisi geldiğinde sinyal oluşmamaktadır. Bunu mümkün hale getirmek için soket üzerinde fcntl 
+    fonksiyonu ile F_SETOWN komut kodunu kullanarak set işlemi yapmak gerekir. fcntl fonksiyonun son parametresi bu durumda sinyalin 
+    gönderileceği prosesin id değeri olarak girilmelidir. Eğer bu parametre negatif bir proses grup id'si olarak girilirse bu 
+    durumda işletim sistemi bu proses grubunun bütün üyelerine bu sinyali gönderir. Tabii tipik olarak sinyalin soket betimleyicisine 
+    sahip olan prosese gönderilmesi istenir. Bu işlem şöyle yapılabilir:
+
+    if (fcntl(sock_client, F_SETOWN, getpid()) == -1)
+        exit_sys("fcntl");
+
+    Aşağıdaki server programda bir OOB verisi geldiğinde SIGURG sinyali oluşturulmaktadır. Bu sinyalin içerisinde recv 
+    fonksiyonu MSG_OOB bayrağı ile çağrılmıştır. OOB verisinin okunması için MSG_OOB bayrağı gerekir ancak OOB verisinin olmadığı 
+    bir duurmda bu bayrak kullanılırsa recv başarısız olmaktadır. O halde SIGURG sinyali geldiğinde recv fonksiyonu MSG_OOB 
+    bayrağı ile çağrılmalıdır. Bu durumda TCP'de her zaman yalnızca 1 byte okunabilmektedir. Ayrıca server programda SIGURG 
+    sinyali set edilirken sigaction yapısının flags parametresinin SA_RESTART biçiminde geçildiğine dikkat ediniz. Bu recv 
+    üzerinde beklerken oluşabilecek SIGURG sinyalinden sonra recv'in otomatik yeniden başlatılması için kullanılmıştır. 
+    Yine buradaki server program port numarasını client program ise server adresini ve port numarasını komut satırı argümanı
+    olarak almaktadır.
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/* oobserver.c */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <signal.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#define BUFFER_SIZE     1024
+
+void sigurg_handler(int sno);
+void exit_sys(const char *msg);
+
+int sock_client;
+
+int main(int argc, char *argv[])
+{
+    int sock;
+    struct sockaddr_in sinaddr, sinaddr_client;
+    socklen_t sinaddr_len;
+    char ntopbuf[INET_ADDRSTRLEN];
+    in_port_t port;
+    ssize_t result;
+    char buf[BUFFER_SIZE + 1];
+    struct sigaction sa;
+
+    if (argc != 2) {
+        fprintf(stderr, "wrong number of arguments!..\n");
+        exit(EXIT_FAILURE);
+    }
+
+    sa.sa_handler = sigurg_handler;
+    sa.sa_flags = SA_RESTART;
+    sigemptyset(&sa.sa_mask);
+
+    if (sigaction(SIGURG, &sa, NULL) == -1)
+        exit_sys("sigaction");
+
+    port = (in_port_t)strtoul(argv[1], NULL, 10);
+
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+        exit_sys("socket");
+
+    sinaddr.sin_family = AF_INET;
+    sinaddr.sin_port = htons(port);
+    sinaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    if (bind(sock, (struct sockaddr *)&sinaddr, sizeof(sinaddr)) == -1)
+        exit_sys("bind");
+
+    if (listen(sock, 8) == -1)
+        exit_sys("listen");
+
+    printf("Waiting for connection...\n");
+    
+    sinaddr_len = sizeof(sinaddr_client);
+    if ((sock_client = accept(sock, (struct sockaddr *)&sinaddr_client, &sinaddr_len)) == -1)
+        exit_sys("accept");
+
+    if (fcntl(sock_client, F_SETOWN, getpid()) == -1)
+            exit_sys("fcntl");
+
+    printf("Connected: %s : %u\n", inet_ntop(AF_INET, &sinaddr_client, ntopbuf, INET_ADDRSTRLEN), (unsigned)ntohs(sinaddr_client.sin_port));    
+  
+    for (;;)  {
+        if ((result = recv(sock_client, buf, BUFFER_SIZE, 0)) == -1)    
+            exit_sys("recv");
+        if (result == 0)
+            break;
+        buf[result] = '\0';
+        if (!strcmp(buf, "quit"))
+            break;
+        printf("%ld bytes received from %s (%u): %s\n", (long)result, ntopbuf, (unsigned)ntohs(sinaddr_client.sin_port), buf);
+   }
+   
+    shutdown(sock_client, SHUT_RDWR);
+    close(sock_client);
+    close(sock);
+    
+    return 0;
+}
+
+void sigurg_handler(int sno)
+{
+    char oob;
+
+    if (recv(sock_client, &oob, 1, MSG_OOB) == -1)
+        exit_sys("recv");
+
+    printf("OOB Data received: %c\n", oob);
+}
+
+void exit_sys(const char *msg)
+{
+    perror(msg);
+
+    exit(EXIT_FAILURE);
+}
+
+/* oobclient.c */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
+#define BUFFER_SIZE        1024
+
+void exit_sys(const char *msg);
+
+int main(int argc, char *argv[])
+{
+    int sock;
+    struct addrinfo *ai, *ri;
+    struct addrinfo hints = {0};
+    char buf[BUFFER_SIZE];
+    char *str;
+    int result;
+    
+    if (argc != 3) {
+        fprintf(stderr, "wrong number of arguments!..\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+        exit_sys("socket");
+
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+
+    if ((result = getaddrinfo(argv[1], argv[2], &hints, &ai)) != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(result));
+        exit(EXIT_FAILURE);
+    }
+
+    for (ri = ai; ri != NULL; ri = ri->ai_next) 
+        if (connect(sock, ri->ai_addr, ri->ai_addrlen) != -1) 
+            break;
+    
+    if (ri == NULL)
+        exit_sys("connect");
+
+    freeaddrinfo(ai);
+
+    printf("Connected...\n");
+
+    for (;;) {
+        printf("Yazı giriniz:");
+        if (fgets(buf, BUFFER_SIZE, stdin) == NULL)
+            continue;
+        if ((str = strchr(buf, '\n')) != NULL)
+            *str = '\0';
+         if (!strcmp(buf, "quit"))
+            break;
+
+        if ((send(sock, buf, strlen(buf), buf[0] == 'u' ? MSG_OOB : 0)) == -1)
+            exit_sys("send");
+    }
+
+    shutdown(sock, SHUT_RDWR);
+    close(sock);
+    
+    return 0;
+}
+
+void exit_sys(const char *msg)
+{
+    perror(msg);
+
+    exit(EXIT_FAILURE);
+}
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Soket fonksiyonlarını kullanarak aynı makinenin prosesleri arasında haberleşme yapabiliriz. Ancak bunun için IP protokol 
+    ailesinin kullanılması oldukça yavaş bir haberleşme sağlamaktadır. İşte aynı makinenin prosesleri arasında soket fonksiyonlarını 
+    kullanarak hızlı bir biçimde haberleşmenin sağlanabilmesi için ismine "UNIX Domain Socket" denilen bir soket haberleşmesi 
+    oluşturulmuştur. Her ne kadar bu soket haberleşmesinin isminde UNIX geçiyorsa da bu soketler Windows sistemleri ve macOS 
+    sistemleri tarafından da desteklenmektedir. 
+
+    UNIX domain soket yaratabilmek için socket fonksiyonun birinci parametresi (protocol family) AF_UNIX geçilmelidir. UNIX domain 
+    soketlerin TCP/IP ya da UDP/IP soketlerle bir ilgisi yoktur. Bu soketler UNIX/Linux sistemlerinde oldukça etkin bir biçimde 
+    gerçekleştirilmektedir. Dolayısıyla aynı makinenin prosesleri arasında haberleşmede borulara, mesaj kuyruklarına, paylaşılan 
+    bellek alanlarına bir seçenek olarak kullanılabilmektedir. Hatta bazı UNIX türevi sistemlerde (ama Linux'ta böyle değil) aslında 
+    çekirdek tarafından önce bu protokol gerçekleştirilip daha sonra boru mekanizması bu protokol kullanılarak gerçekleştirilmektedir. 
+    Böylece örneğin aynı makinedeki iki prosesin haberleşmesi için UNIX domain soketler TCP/IP ve UDP/IP soketlerine göre çok daha 
+    hızlı çalışmaktadır. Aynı makine üzerinde çok client'lı uygulamalar için UNIX domain soketler boru haberleşmesine ve mesaj 
+    kuyruklarına göre organizasyonel avantaj bakımından tercih edilebilmektedir. Çünkü çok client'lı boru uygulamalarını ve mesaj 
+    kuyruğu uygulamalarını yazmak daha zahmetlidir. Programcılar TCP/IP ve UDP/IP soket haberleşmesi yaparken kullandıkları 
+    fonksiyonlarının aynısını UNIX domain soketlerde de kullanabilmektedir. Böylece örneğin elimizde bir TCP/IP ya da UDP/IP 
+    client-server program varsa bu programı kolaylıkla UNIX domain soket kullanılacak biçimde değiştirebiliriz.
+
+    UNIX domain soketlerin kullanımı en çok boru kullanımına benzemektedir. Ancak UNIX domain soketlerin borulara olan bir 
+    üstünlüğü "full duplex" haberleşme sunmasıdır. Bilindiği gibi borular "half duplex" bir haberleşme sunmaktadır. Ancak 
+    genel olarak boru haberleşmeleri UNIX domain soket haberleşmelere göre daha hızlı olma eğilimindedir.
+
+    UNIX domain soketler kullanım olarak daha önce görmüş olduğumuz TCP/IP ve UDP/IP soketlerine çok benzemektedir. Yani işlemler
+    sanki TCP/IP ya da UDP/IP client server program yazılıyormuş gibi yapılır. Başka bir deyişle UNIX domain soketlerinde client ve 
+    server programların genel yazım adımları TCP/IP ve UDP/IP ile aynıdır. 
+
+    UNIX domain soketlerde client'ın server'a bağlanması için gereken adres bir dosya ismi yani yol ifadesi biçimindedir. Kullanılacak 
+    yapı sockaddr_in değil sockaddr_un yapısıdır. Bu yapı <sys/un.h> dosyası içerisinde  bildirilmiştir ve en azından şu elemanlara 
+    sahip olmak zorundadır:
+
+    struct sockaddr_un {
+        sa_family_t sun_family;               
+        char sun_path[108];            
+    };
+
+    Yapının sun_family elemanı AF_UNIX biçiminde, sun_path elemanı da soketi temsil eden dosyanın yol ifadesi biçiminde girilmelidir. 
+    Burada yol ifadesiyle belirtilen dosya bind işlemi tarafından yaratılmaktadır. Yaratılan bu dosyanın türü "ls -l komutunda" 
+    "(s)ocket" biçiminde görüntülenmektedir. Eğer bu dosya zaten varsa bind fonksiyonu başarısız olur. Dolayısıyla bu dosyanın 
+    varsa silinmesi gerekmektedir. O halde client ve server programlar işin başında bir isim altında anlaşmalıdır. Önemli bir 
+    nokta da şudur: sockaddr_un yapısının kullanılmadan önce sıfırlanması gerekmektedir. bind tarafından yaratılan bu soket 
+    dosyaları normal bir dosya değildir. Yani open fonksiyonuyla açılamamaktadır. 
+
+    UNIX Domian soketlerde port numarası biçiminde ebir kavramın olmadığına dikkat ediniz. Port numarası kavramı IP ailesinin
+    aktarım katmanına ilişkin bir kavramdır. UNIX domain soketler AF_UNIX protokol ailesi ismiyle oluşturulan başka bir ailenin
+    soketleridir.
+
+    Pekiyi stream tabanlı UNIX domain soketlerde server accept uyguladığında client'a ilişkin sockaddr_un yapısından ne almaktadır?
+    Aslında bu protokolde bir port kavramı olmadığına göre server bağlantıdan bir bilgi elde etmeyecektir. Fakat yine de 
+    client program da bind uygulayıp ondan sonra sokete bağlanabilir. Bu durumda server client bağlantısından sonra sockaddr_un
+    yapısından client'ın bind ettiği soket dosyanın yol ifadesini elde eder. 
+
+    Aşağıdaki örnekte çok client'lı bir UNIX domain soket örneği verilmiştir. Örneğimizdeki server programda thread modeli
+    kullanılmıştır. Yani server her client bağlantısında bir thread yaratmaktadır. Bu programların her ikisinde de komut 
+    satırı argümanı olarak soket dosyasının yol ifadesi alınmaktadır. Bir soket dosyası zaten var ise bind işleminin başarısız
+    olacağını anımsayınız. 
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/* uds-server.c */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+
+#define BUFFER_SIZE         4096
+
+typedef struct tagCLIENT_INFO {
+    int sock;
+    struct sockaddr_un sun; 
+} CLIENT_INFO;
+
+void *client_thread_proc(void *param);
+char *revstr(char *str);
+void exit_sys(const char *msg);
+
+int main(int argc, char *argv[])
+{
+    int server_sock, client_sock;
+    struct sockaddr_un sun_server, sun_client;
+    socklen_t sun_len;
+    CLIENT_INFO *ci;
+    ssize_t result;
+    pthread_t tid;
+
+    if (argc != 2) {
+        fprintf(stderr, "wrong number of arguments!..\n");
+        exit(EXIT_FAILURE);
+    }
+
+    if ((server_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+        exit_sys("socket");
+
+    memset(&sun_server, 0, sizeof(sun_server));
+    sun_server.sun_family = AF_UNIX;
+    strcpy(sun_server.sun_path, argv[1]);
+
+    if (bind(server_sock, (struct sockaddr *)&sun_server, sizeof(sun_server)) == -1)
+        exit_sys("bind");
+
+   if (listen(server_sock, 8) == -1)
+        exit_sys("listen");
+
+    for (;;) {
+		printf("waiting for connection...\n");
+		sun_len = sizeof(sun_client);
+		if ((client_sock = accept(server_sock, (struct sockaddr *)&sun_client, &sun_len)) == -1)
+			exit_sys("accept");
+
+          printf("Connected new client\n");
+		
+		if ((ci = (CLIENT_INFO *)malloc(sizeof(CLIENT_INFO))) == NULL) {
+			fprintf(stderr, "cannot allocate memory!...\n");
+			exit(EXIT_FAILURE);
+		}
+
+		ci->sock = client_sock;
+		ci->sun = sun_client;
+
+		if ((result = pthread_create(&tid, NULL, client_thread_proc, ci)) != 0) {
+			fprintf(stderr, "pthread_create: %s\n", strerror(result));
+			exit(EXIT_FAILURE);
+		}
+
+		if ((result = pthread_detach(tid)) != 0) {
+			fprintf(stderr, "pthread_detach: %s\n", strerror(result));
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	close(server_sock);
+
+	return 0;
+}
+
+void *client_thread_proc(void *param)
+{
+	char buf[BUFFER_SIZE + 1];		            // BUFFER_SIZE is enough
+	CLIENT_INFO *ci = (CLIENT_INFO *)param;
+    ssize_t result;
+
+	for (;;) {
+		if ((result = recv(ci->sock, buf, BUFFER_SIZE, 0)) == -1)
+			exit_sys("recv");
+		if (result == 0)
+			break;
+		buf[result] = '\0';
+		if (!strcmp(buf, "quit"))
+			break;
+		printf("%jd byte(s) received: %s\n", (intmax_t)result, buf);
+		revstr(buf);
+		if (send(ci->sock, buf, result, 0) == -1)
+			exit_sys("send");
+	}
+
+	printf("client disconnected...\n");
+
+	shutdown(ci->sock, SHUT_RDWR);
+	close(ci->sock);
+
+	free(ci);
+
+	return NULL;
+}
+
+char *revstr(char *str)
+{
+	size_t i, k;
+	char temp;
+
+	for (i = 0; str[i] != '\0'; ++i)
+		;
+
+	for (--i, k = 0; k < i; ++k, --i) {
+		temp = str[k];
+		str[k] = str[i];
+		str[i] = temp;
+	}
+
+	return str;
+}
+
+void exit_sys(const char *msg)
+{
+    perror(msg);
+
+    exit(EXIT_FAILURE);
+}
+
+/* uds-client.c */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+
+#define BUFFER_SIZE         4096
+
+void exit_sys(const char *msg);
+
+int main(int argc, char *argv[])
+{
+    int client_sock;
+    struct sockaddr_un sun_client;
+    ssize_t result;
+    char buf[BUFFER_SIZE + 1];
+    char *str;
+    
+    if (argc != 2) {
+        fprintf(stderr, "wrong number of arguments!..\n");
+        exit(EXIT_FAILURE);
+    }
+
+    if ((client_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+        exit_sys("socket");
+
+    memset(&sun_client, 0, sizeof(sun_client));
+    sun_client.sun_family = AF_UNIX;
+    strcpy(sun_client.sun_path, argv[1]);
+
+    if (connect(client_sock, (struct sockaddr *)&sun_client, sizeof(sun_client)) == -1)
+        exit_sys("socket");
+
+    for (;;) {
+        printf("Yazı giriniz:");
+        if (fgets(buf, BUFFER_SIZE, stdin) == NULL)
+            continue;
+        if ((str = strchr(buf, '\n')) != NULL)
+            *str = '\0';
+        if ((send(client_sock, buf, strlen(buf), 0)) == -1)
+            exit_sys("send");
+        if (!strcmp(buf, "quit"))
+            break;
+
+        if ((result = recv(client_sock, buf, BUFFER_SIZE, 0)) == -1)
+            exit_sys("recv");
+        if (result == 0)
+            break;
+        buf[result] = '\0';
+        printf("%ld bytes received: %s\n", (long)result, buf);
+    }
+
+    close(client_sock);
+    
+	return 0;
+}
+
+void exit_sys(const char *msg)
+{
+    perror(msg);
+
+    exit(EXIT_FAILURE);
+}
+
 
 /*--------------------------------------------------------------------------------------------------------------------------
 
