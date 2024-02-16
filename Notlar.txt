@@ -49523,6 +49523,10 @@ void exit_sys(const char *msg)
     ------- ACK ----->
      ESTABLISHED         ESTABLISHED
 
+/*--------------------------------------------------------------------------------------------------------------------------    
+                                            117. Ders 04/02/2024 - Pazar
+---------------------------------------------------------------------------------------------------------------------------*/
+
 /*--------------------------------------------------------------------------------------------------------------------------
     Bağlantının kopartılması için iki tarafın da birbirilerine FIN biti set edilmiş paketler gönderip ACK biti set edilmiş 
     paketleri alması gerekir. Bağlantının kopartılması da tipik olarak 3'lü ya da 4'lü el sıkışma yoluyla yapılmaktadır. 
@@ -49566,7 +49570,7 @@ void exit_sys(const char *msg)
 
     Soket programlamada bağlantı shutdown ile SHUT_RD kullanılarak kopartıldığında yukarıdaki 3'lü el sıkışma gerçekleşmektedir. 
 
-    Bağlantının koparılması yarım biçimde de (half close) yapılabilir. Bu durumda bir taraf diğer tarafa FIN paketi gönderir. 
+    Bağlantının koparılması "yarım biçimde de (half close") yapılabilir. Bu durumda bir taraf diğer tarafa FIN paketi gönderir. 
     Karşı taraf da buna ACK paketi ile karşılık verir. Bundan sonra artık FIN gönderen taraf veri gönderemez ama alabilir, 
     ACK gönderen taraf ise veri alamaz ama gönderebilir:
 
@@ -49590,51 +49594,88 @@ void exit_sys(const char *msg)
     TIME_WAIT
 
     Burada da artık Peer-2 veri gönderemez ama alabilir, Peer-1 ise veri veri alamaz fakat gönderebilir. 
-    
-    Pekiyi shutdown fonksiyonunun half close işlemindeki etkisi nasıldır? İşte bir taraf diğer taraf shutdown uygularsa ancak 
-    diğer taraf shutdown uygulamadan işlemine devam ederse böyle bir half close işlemi oluşmaktadır. Örneğin client taraf 
-    shutdown fonksiyonunu aşağıdaki gibi çağırmış olsun:
 
-    shutdown(sock, SHUT_WR);
-
-    Burada client server'a FIN paketi gönderir, server da buna ACK ile yanıt verir ve half close işlemi oluşur. Artık client bundan 
-    sonra server'a veri gönderemez ancak ondan veri alabilir. Tabii tam ters biçimde server da client'tan veri alabilir ancak ona
-    artık veri gönderemez. 
-    
-    shutdown fonksiyonu SHUT_RD ile çağrıldığında TCP'de yukarıdaki gibi half close işlemi yapılmamaktadır. Yani SHUT_RD işlemi ile
-    karşı tarafa bir FIN paketi gönderilmemektedir. Ancak işletim sisteminin soket arayüzü artık recv fonksiyonunda bir kontrol 
-    yapmakta ve recv bilgiyi artık tampondan almamaktadır. Bundan sonra karşı tarafın gönderdiği bilgi yine TCP paketi biçiminde
-    iletilmekle birlikte artık recv fonksiyonu bunu alamamaktadır. 
-
-    <BURADA KALDIK>
-
-    Her iki taraf da bunu birlikte yaparsa 4'lü el sıkışma gerçekleşir:
-
-    
-    Peer-1              Peer-2
-
-    ESTABLISHED         ESTABLISHED
-    ------- FIN -----> 
-    FIN-WAIT-1          
-    <-- ACK -------
-                        
-    <-- FIN ------      
-    CLOSE_WAIT          CLOSE_WAIT
-    ---- ACK ---->
-                        TIME_WAIT
-   CLOSING
-
+/*--------------------------------------------------------------------------------------------------------------------------    
+                                            118. Ders 09/02/2024 - Cuma
 ---------------------------------------------------------------------------------------------------------------------------*/
 
-    TCP'de akış kontrolü için "acknowledgement" yani alındı bildirimi kullanılmaktadır. Bir taraf bir tarafa birşeyler gönderdiği zaman karşı taraf bunu 
-    aldığını Flags kısmındaki ACK biti set edilmiş bir paket ile bildirir. ACK paketleri boş olabilir ya da dolu olabilir. Yani karşı taraf bir bilgiyi 
-    gönderirken de aynı anda daha önce almış olduğu bilgiler için ACK yollayabilir. TCP'de kümülatif bir "acknowledgement" sistemi kullanılmaktadır. 
-    Gönderilen her byte'ın bir başlangıç sıra numarası vardır. Buna "sequence number" denilmektedir. Sequence number TCP başlığında 32 bitlik bir alandır. 
-    Bu alandaki sayı son noktasına gelirse yeniden başa dönmektedir. Sequnce number bağlantı kurulduğunda sıfırdan başlamaz, rastgele bir değerden başlatılmaktadır. 
-    Örneğin belli bir anda bir tarafın sequnce number değeri 1552 olsun. Şimdi bu taraf karşı tarafa 300 byte göndersin. Artık bu sequence number 1852 olacaktır. 
-    Yani bir sonraki gönderimde bu taraf sequence number olarak 1852 kullanacaktır. Sequnce number her gönderimde bulundurulmak zorundadır. Karşı taraf bilgiyi aldığını
-    ACK bitiyle onaylarken TCP başlığındaki "acknowledgement number" denilen sayıyı da gönderir. Acknowledgement karşı taraftan talep edilen sonraki sequence number değeri olarak gnderilir.
-    Örneğin:
+/*--------------------------------------------------------------------------------------------------------------------------    
+    Pekiyi shutdown fonksiyonunun "half close" işlemindeki etkisi nasıldır? Aslında shutdown fonksiyonunun ikinci parametresinde
+    belirtilen SHUT_WR, SHUT_RD ve SHUT_RDWR değerlerinin protoldeki bağlantının kopartılması süreciyle bir ilgisi yoktur. 
+    shutdown fonksiyonu her durumda "half close" uygulamaktadır. Yani shutdown fonksiyonun ikinci parametresi ne olursa olsun
+    bu fonksiyonu çağıran taraf karşı tarafa FIN paketi yollar, akrşı atarf da bu tarafa ACK paketi yollar. Zaten protokolün 
+    kendisinde "half close" işlemi SHUT_WR, SHUT_RD ya da SHUT_RDWR biçiminde bir bilgi taşımamaktadır. TCP protokolü tasarlandığında 
+    "half close" işleminin "bir tarafı göndermeye kapatıp diğer tarafı almaya kapatmak" gibi bir işlev göreceği düşünülmüştür.
+    Ancak bu "half close" işleminin işletim sistemleri tarafından tam olarak nasıl ele alınacağı TCP/IP sıket gerçekleştirimini 
+    yapanlar tarafından belirlenmektedir. 
+
+    Şimdi Linux sistemlerinde shutdown fonksiyonunun muhtemel gerçekleştirimi ve arka planda gerçekleşen muhtemel işlemler konusunda 
+    bilgi verelim. Örneğin bir taraf shutdown fonksiyonunu SHUT_WR parametresiyle aşağıdaki gibi çağırmış olsun. Ancak karşı taraf 
+    shutdown fonksiyonunu çağırmamış olsun:
+        
+    shutdown(sock, SHUT_WR);
+
+    Burada SHUT_WR uygulayan taraf diğer tarafa FIN paketi gönderir, diğer taraf da buna ACK ile yanıt verir ve "half close" işlemi 
+    gerçekleşir. Artık SHUT_WR uygulayan taraf bundan sonra diğer tarafa veri göndermemeli diğer taraf da karşı taraftan veri almamlıdır. 
+    Bir taraf SHUT_WR ile "half close" uyguladığında karşı taraf recv işlemi yaparsa sanki soket kapatılmış gibi recv fonksiyonu 
+    0 ile geri dönecektir. SHUT_WR yapan taraf send fonksiyonunu kullandığında ise SIGPIPE sinyali oluşacaktır.
+    
+    Şimdi de bir taraf shutdown fonksiyonunu SHUT_RD ile çağırmış olsun.
+
+    shutdown(sock, SHUT_RD);
+
+    Bu durumda yine SHUT_RD uygulayan taraf karşı tarafa FIN paketi gönderir ve karşı taraftan ACK paketi alır. Böylece "half close" 
+    işlemi gerçekleşir. Artık SHUT_RD uygulayan taraf veri almayacak fakat veri gönderebilecektir. Karşı taraf ise veri alabilecek 
+    ancak veri gönderemeyecektir. Tabii aslında karşı taraf shutdown fonksiyonun aslında hangi parametreyle çağprıldığını bilmemektedir. 
+    Dolayısıyla aslında soket fonksiyonlarıyla veri göndermeye devam edebilecektir. Karşı taraf eğer send işlemi yaparsa 
+    burada işletim sistemi değişik davranışlar gösterebilmektedir. Karşı tarafın gönderdiği paketler karşı tarafa ulaştığında SHUT_RD 
+    yapan taraftaki işletim sistemi bu paketleri hiç dikkate almayabilir. Böylece SHUT_RD yapan taraf recv fonksiyonunu çağırsa 
+    bile recv 0 ile geri döner. Ya da işletim sistemi böylesi bir durumda karşı taraf veri gönderdiğinde ona RST bayrağı set edilmiş 
+    paket gönderip (buna connection reset denilmektedir) karşı tarafın artık send işlemlerinde SIGPIPE sinyali üretmesini sağlayabilir. 
+
+    Şimdi de shutwown fonksiyonunun SHUT_RDWR parametresi ile çağrıldığını düşünelim. Bu en çok kullanılan parametredir. Bu durumda yine 
+    fonksiyonu çağıran taraf karşı tarafa FIN paketi gönderir, karşı taraftan ACK paketi alır. Yine "half close" işlemi gerçekleşir. 
+    Ancak artık SHUT_RDWR uygulayan taraf recv ve send işlemlerini yapamayacaktır. SHUT_RDWR uygulayan taraf recv fonksiyonunu çağırırsa 
+    fonksiyon 0 ile geri dönecek, send fonksiyonunu çağırırsa doğrudan SIGPIPE sinyali oluşacaktır. Bu durumda SHUT_RDWR uygulayan 
+    tarafın karşı tarafı, artık send işlemi yaparsa yine davranış yukarıda SHUT_RD fonksiyonunda belirtildiği gibi gerçekleşecektir. 
+
+    Tabii normal olarak iki tarafın da aslında ayrı ayrı shutdown fonksiyonunu çağırması gerekir. Bu durumda 4'lü el sıkışma
+    gerçekleşecektir. TCP/IP soket programlamada önce bir taraf shutdown uygulayıp "half close" oluşturabilir. Diğer taraf da bunu
+    anlayıp o da shutdown uygulayarak 4'lü el sıkışma oluşturabilir.   
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------    
+    TCP'de akış kontrolü için "acknowledgement" yani "alındı" bildirimi kullanılmaktadır. Bir taraf bir tarafa bir paket veri 
+    gönderirken verinin yanı sıra aynı zamanda paketin Flags kısmındaki PSH bitini 1 yapar. Karşı taraf da paketi aldığını diğer 
+    tarafa haber vermek için diğer tarafa ACK biti set edilmiş bir paket gönderir. TCP'de her gönderilen paket için bir "alındı" 
+    bilgisinin alınması gerekir. Eğer paketi gönderen taraf bu paketi içeren bir ACK paketi alamazsa bu durumda "paketin karşı 
+    tarafa ulaşmadığından" şüphelenemktedir. Bu durumda paketi gönderen taraf belli bir algoritma ile zaman aralıklarıyla aynı paketi yeniden 
+    göndermektedir. Böylesi bir durumda paketi alan taraf aynı paketi birden fazla kez de alabilir. Bunun yalnızca tek bir kopyasını 
+    işleme sokmak alan tarafın sorumluluğundadır. Tabii gönderen tarafın paketi yolda kaybolabileceği gibi alan tarafın ACK paketi de
+    yolda kaybolabilir. Bu durumda yine gönderen taraf ACK alamadığına göre göndermeye devam edecektir. Bu durumda alıcı taraf bunun 
+    için yine ACK gönderecektir. 
+    
+    Yukarıda da belirttiğimiz gibi paketin "data" kısmı dolu olmak zorunda değildir. Bağlantı sağlanırken ve sonlandırıırken gönderilen 
+    SYN ve FIN paketleri "data" içermemektedir. ACK paketi ayrı bir paket olarak gönderilmek zorunda değildir. Bilgiyi alan 
+    taraf hem bilgi gönderirken hem de ACK işlemi yapabilir. Örneğin:
+
+    PSH -- data ----->   
+    <------data------- PSH + ACK
+    ACK --------------->
+
+    Aslında izleyen paragraflarda da ele alınacağı gibi ACK biti yalnızca "alındığını bildirme için değil" pencere genişliklerinin 
+    ayarlanması için de kullanılmaktadır. Yani bir taraf karşı taraftan bilgi almadığı halde yine ACK gönderebilir. 
+
+    TCP'de kümülatif bir "acknowledgement" sistemi kullanılmaktadır. Yani paketi gönderen taraf bu paket için ACK almadan başka paketleri 
+    gönderebilir. Paketleri alan taraf birden fazla paket için tek bir ACK yollayabilir. Kümülatif ACK işlemi için "sıra numarası 
+    (sequence number)" denilen bir değerden faydalanılmaktadır. Sırası numarası (sequence number) gönderilen paketin bütün içerisindeki 
+    kaçıncı byte'tan başladığını olduğunu belirten bir değerdir. Bunu dosyalardaki dosya göstericisine benzetebiliriz. Sıra numarası TCP 
+    başlığında 32 bitlik bir alanda tutulmaktadır. Sıra numarası 32 bitlik değerin sonuna geldiğinde yeniden başa dönmektedir (wrapping).
+    Sıra numarası bağlantı kurulduğunda sıfırdan başlatılmaz, rastgele bir değerden başlatılmaktadır. Örneğin belli bir anda bir tarafın 
+    sura numarası 1552 olsun. Şimdi bu taraf karşı tarafa 300 byte göndersin. Artık bu gönderimden sonra sıra numarası 1852 olacaktır. 
+    Yani bir sonraki gönderimde bu taraf sırası numarası olarak 1852'yi kullanacaktır. Sıra numarası her bilgi gönderiminde bulundurulmak 
+    zorundadır. Bilgiyi alan taraf ACK paketini gönderirken paketteki sıra numarasını "talep ettiği sonraki sıra numarası" olarak paketin 
+    sıra numarasını belirten kısmına yerleştirir.  Örneğin:
 
     Peer-1                                          Peer-2
     
@@ -49645,41 +49686,248 @@ void exit_sys(const char *msg)
                                                   <---- ACK (Acknowledgement Number: 4010)    
     10 byte  (sequnce Number: 4010) ------>
 
-    Pekiyi bir TCP paketi (TCP segment) gönderici (sender) tarafından gönderildikten sonra alıcı (receiver) bunu alamamışsa ne olacaktır? Çünkü TCP'nin güvenli bir protokol
-    olması demek bir biçimde böyle bir durumda bir telafinin yapılması demektir. TCP protokolü şöyle yöntem izlemektedir: Gönderen taraf her gönderdiği paket (TCP segment) için 
-    bir zamanlayıcı kurar. Bu zamanlayıcıya "retransmission timer" denilmektedir. Eğer belli süre içerisinde gönderilen TCP paketini kapsayan bir ACK gelediyse gönderici 
-    taraf aynı paketi yeniden göndermektedir. Böylece aslında gönderilen paket henüz onun için ACK gelmedikçe gönderme tamponundan atılmaz. Retrsansmission Timer bazı değerlere
-    göre dinamik bir biçimde oluşturulmaktadır. Bunun detayları için önerilen kaynaklara bakılabilir. Tabii böyle bir sistemde alıcı taraf aynı paketi birden fazla kez 
-    alabilmektedir. Bu durumda bu paketlerin yalnızca tek bir kopyasını alıp diğerlerini atmak alıcı tarafın sorumluluğundadır. 
+    Buradaki örnek gönderimde gönderen taraf önce 300 byte'lık bir paketi sonra 100 byte'lık bir paketi karşı tarafa göndermiştir. Karşı yataf 
+    ise bu iki paket için tek bir ACK göndermiştir. Karşı tarafın gönderdiği ACK aslında diğer taraftan yeni talep edeceği sıra numarasındaki 
+    bilgiyi belirtmektedir. İki paketi gönderen taraf karşı taraftan gelen ACK içerisindeki bu sıra numarasına baktığında bu iki paketinde 
+    alındığını anlamaktadır. Görüldüğü gibi her paket için ayrı bir ACK yollanmak zorunda değildir. Buna "kümülatif alındı (cummulative 
+    acknowledgment)" bildirimi denilmektedir. Örneğin bir tarafın karşı tarafa peş peşe 5 paket gönderdiğini düşünelim. Karşı taraftan 
+    bir ACK gelmiş olsun. Gönderen taraf bu ACK paketine bakarak gönderdiği bilginin ne kadarının karşı taraf tarafından alındığını 
+    anlayabilmektedir. 
 
-    Akış kontrolünün en önemli unsurlarından biri de tampon taşmasını engellemektir. Örneğin gönderici taraf sürekli bilgi gönderirse fakat alıcı taraftaki proses recv
-    işlemiyle hiç okuma yapmazsa alıcı taraftaki işletim sisteminin alıcı tamponu dolabilir ve sistem çökebilir. İşte akış kontrolü sayesinde alıcı taraf gönderici tarafa
-    "artık gönderme, benim tamponum doldu" diyebilmektedir. TCP'de bunun için "pencere (window)" kavramı kullanılmaktadır. Pencerenin bir büyüklüğü (window size) vardır. 
-    Pencere büyüklüğü demek "hiç ACK gelmediği durumda göndericinin en fazla gönderebileceği byte sayısı" demektir. Örneğin pencerenin 8K olması demek "alıcı ACK"
-    göndermedikten sonra göndericiinn en fazla 8K gönderebilmesi demektir. Pencere genişliği alıcı taraf tarafından gönderici tarafa bildirilir. Örneğin pencere genişliği
-    8K olsun. Bu durumda gönderici taraf sırasıyla 1K + 1K + 1K + 1K + 1K uzunluğunda toplam 5K'lık bilgiyi karşı tarafa göndermiş olsun. Eğer henüz ACK gelmemişse
-    gönderici taraf en fazla 3K kadar daha bilgi gönderebilir. Tam bu sırada iki ayrı 1K için kümülatif olarak ACK geldiğini düşünelim. Şimdi pencere genişliği gönderen taraf
-    için ne olmalıdır? İşte bu durum alıcı taarafın ACK gönderirken aslında ACK gönderdiği bilgileri tamponunda eritmiş olup olmadığına bağlıdır. Pekala alıcı taraf
-    ACK gönderdiği halde henüz oradaki proses recv yapmadığı için bu bilgileri 8K'lık tamponunda hala bekletiyor olabilir. Bu durumda gönderici tarafın pencere genişliğinin
-    5K'ya düşürülmesi gerekir. İşte TCP'de her ACK sırasında yeni pencere genişliği de aslında karşı tarafa gönderilmektedir. O halde aslında pencere genişliği her ACK
-    bildiriminde dinamik olarak ayarlanmaktadır. Tabii TCP çift taraflı olduğna göre her iki tarafın ayrı sequence number, acknowledgement number ve pencere genişlikleri 
-    vardır. Ayrıca ACK paketlerinin illa da daha önce alınmış olan bir paketin alındığını bildirmek amaçlı kullanılmayabileceğini de belirtelim. Bir taraf pencere genişliğini
-    ayarlamak için de ACK gönderebilir. Tabi bu durumda "acknowledgement number" yeni aynı değerde olmalıdır. 
+    Pekiyi bir TCP paketi (TCP segment) gönderici (sender) tarafından gönderildikten sonra alıcı (receiver) bunu alamamışsa ne olacaktır? 
+    Çünkü TCP'nin güvenli bir protokol olması demek bir biçimde böyle bir durumda bir telafinin yapılması demektir. İşte yukarıda da 
+    belirtitğimiz gibi TCP protokolü şöyle yöntem izlemektedir: Gönderen taraf her gönderdiği paket (TCP segment) için bir zamanlayıcı 
+    kurar. Bu zamanlayıcıya "retransmission timer" denilmektedir. Eğer belli süre içerisinde gönderilen TCP paketini kapsayan bir
+    ACK gelmediyse gönderici taraf aynı paketi yeniden göndermektedir. Böylece aslında gönderilen paket henüz onun için ACK gelmedikçe 
+    gönderme tamponundan atılmaz. Retrsansmission timer bazı değerlere göre dinamik bir biçimde oluşturulmaktadır. Bunun detayları için 
+    önerilen kaynaklara bakılabilir. Tabii böyle bir sistemde alıcı taraf aynı paketi birden fazla kez alabilmektedir. Yukarıda da belirttiğimiz 
+    gibi bu durumda bu paketlerin yalnızca tek bir kopyasını alıp diğerlerini atmak alıcı tarafın sorumluluğundadır. 
+---------------------------------------------------------------------------------------------------------------------------*/
 
-    Pekiyi seqeunce number, pencere genişlikleri nasıl iki tarafa bildirilmektedir. İşte bağlantı kurulurken client taraf SYN paketi içerisinde
-    kendi başlangıç sequence number'ını karşı tarafa iletmektedir. Server de bağlantıyı kabul ederken yine SYN (ya da SYN + ACK) paketinde kendi sequence number'ını
-    karşı tarafa bildirmektedir. Aslında SYN paketi yalnızca başlık içermektedir. Data içermemektedir. Ancak TCP protokolüne göre özel bir durum olarak SYN paketlerinde
-    sanki tek bir byte varmış gibi ackowledgement number alınmaktadır. Pencere genişliği de aslında ilk kez bağlantı yapılarkenki ACK paketlerinde belirtilmektedir. 
-    Yukarıda belirtildiği gibi pencere genişliği her ACK paketinde bildirilir. 
+/*--------------------------------------------------------------------------------------------------------------------------   
+                                        119. Ders 11/02/2024 - Pazar                                                
+---------------------------------------------------------------------------------------------------------------------------*/
 
-    TCP/IP stack gerçekleştirimleri ACK stratejisi için bazı yöntemler uygulamaktadır. Örneğin eğer gönderilecek paket varsa bununla birlikte ACK paketinin
-    gönderilmesi, ACK'ların iki paket biriktirildikten sonra gönderilmesi gibi. Bunun için "Tcp IP Protocol Suite 466'ıncı sayfaya başvurabilirsiniz."
+/*--------------------------------------------------------------------------------------------------------------------------   
+    TCP protokolünün bir "akış kontrolü (flow control)" oluşturduğunu belirtmiştik. Akış kontrolünün amacı tampon taşmasının 
+    engellenmesidir. Bağlantı sağldandıktan sonra bir tarafın diğer tarafa sürekli bilgi gönderdiğini düşünelim. Bu bilgileri 
+    işletimsistemi alacak ve bekletecektir. Pekiyi ya ilgili proses soketten okuma yapmazsa? Bu durumda hala karşı taraf bilgi 
+    gönderirse işletim sismeinin ayırdığı tampon taşabilir. 
+
+    Tpik olarka işletim sistemleri bağlantı yapılmış her soket için iki tamon bulundurmaktadır: Gönderme taponu (send buffer) ve
+    alma tamponu (receive buffer). Biz send fonksiyonunu kullandığımızda göndermek istediğimiz bilgiler gönderme tamponuna 
+    yazılır ve hemen send fonksiyonu geri döner. Gönderme tamponundaki bilgilerin paketlenerek gönderilmesi belli bir zaman sonra
+    işletim sistemi tarafından yapılmaktadır. Eğer send işlemi sırasında zaten gönderme tamponu doluysa send fonksiyonu gönderilecek 
+    olanları tamamen tampona yazana kadar blokede beklemektedir. Alma tamponu (receive buffer) karşı tarafın gönderdiği bilgilerin 
+    alınması için kullanılan tampondur. Karşı tarafın gönderdiği bilgiler alındığında işletim sistemi bu bilgileri alma tamponuna 
+    yerleştirir. Aslında recv fonksiyonu bu tampondan bilgileri almaktadır. 
+
+    send ---> [gönderme tamponu] ---> işletim sistemi gönderiyor ---> ||||| <--- işletim sistemi alıyor ---> [alma tamponu] <---- recv
+
+    Akış kontrolünün en önemli unsurlarından biri alma tamponunun taşmasını engellemektir. Örneğin gönderici taraf sürekli bilgi gönderirse 
+    fakat alıcı taraftaki proses recv işlemiyle hiç okuma yapmazsa alıcı taraftaki işletim sisteminin alıcı tamponu dolabilir ve 
+    sistem çökebilir. İşte akış kontrolü sayesinde alıcı taraf gönderici tarafa "artık gönderme, benim tamponum doldu" diyebilmektedir. 
+    Şimdi bir taraftaki prosesin diğer tarafa bir döngü içerisinde send fonksiyonuyla bilgi gönderdiğini ancak diğer taraftaki prosesin
+    bu bilgiyi almadığını varayalım. Akış kontrolünün uygulandığı durumda ne olacaktır? İşte önce send ile gönderilenler karşı tarafa 
+    iletilecektir. Karşı tamponu dolduğunda karşı taraf gönderen tarafa "artık gönderme" diyecektir. Bu durumda göndermeyi 
+    kesen taraftaki proses hala send işlemi yapacağına göre o tarafın gönderme tamponu dolacak ve send fonksiyonu blokeye 
+    yol açacaktır. Linux sistemlerinde tek bir send ile gönderme tamponundan daha büyük bir bilgiyi göndermek istediğimizde 
+    tüm bilgi yine tampona yerleştirilene kadar bloke oluşmaktadır. 
+
+    Aşağıdaki örnekte client program bağlantı kurduktan sonra bir döngü içerisinde server programa send fonksiyonu ile bilgi
+    göndermektedir. Ancak server program bu bilgiyi recv ile okumamaktadır. Yukarıda da belirttiğimiz gibi bu durumda server 
+    programın tamponu dolacak ve server program karşı tarafa "artık gönderme" diyecek. Bu kezde karşı tarafın gönderme tamponu 
+    dolacak dolayısıyla send fonksiyonu da bir süre sonra blokede bekleyecektir. Bu programları farklı terminallerden aşağıdaki 
+    gibi çalıştırabilirsiniz:
+
+    ./server 55555
+    ./client localhost 55555
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/* server.c */
+
+/* oobserver.c */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#define BUFFER_SIZE     1024
+
+void exit_sys(const char *msg);
+
+int main(int argc, char *argv[])
+{
+    int sock_server, sock_client;
+    struct sockaddr_in sinaddr, sinaddr_client;
+    socklen_t sinaddr_len;
+    char ntopbuf[INET_ADDRSTRLEN];
+    in_port_t port;
+
+    if (argc != 2) {
+        fprintf(stderr, "wrong number of arguments!..\n");
+        exit(EXIT_FAILURE);
+    }   
+
+    port = (in_port_t)strtoul(argv[1], NULL, 10);
+
+    if ((sock_server = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+        exit_sys("socket");
+
+    sinaddr.sin_family = AF_INET;
+    sinaddr.sin_port = htons(port);
+    sinaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    if (bind(sock_server, (struct sockaddr *)&sinaddr, sizeof(sinaddr)) == -1)
+        exit_sys("bind");
+
+    if (listen(sock_server, 8) == -1)
+        exit_sys("listen");
+
+    printf("Waiting for connection...\n");
+    
+    sinaddr_len = sizeof(sinaddr_client);
+    if ((sock_client = accept(sock_server, (struct sockaddr *)&sinaddr_client, &sinaddr_len)) == -1)
+        exit_sys("accept");
+
+    printf("Connected: %s : %u\n", inet_ntop(AF_INET, &sinaddr_client, ntopbuf, INET_ADDRSTRLEN), (unsigned)ntohs(sinaddr_client.sin_port));    
+  
+    printf("Press any key to EXIT...\n");
+    getchar();
+
+    shutdown(sock_client, SHUT_WR);
+    close(sock_client);
+    close(sock_server);
+    
+    return 0;
+}
+
+void exit_sys(const char *msg)
+{
+    perror(msg);
+
+    exit(EXIT_FAILURE);
+}
+
+/* client.c */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+
+#define BUFFER_SIZE        1024
+
+void exit_sys(const char *msg);
+
+int main(int argc, char *argv[])
+{
+    int sock;
+    struct addrinfo *ai, *ri;
+    struct addrinfo hints = {0};
+    char buf[BUFFER_SIZE] = {0};
+    int result;
+    ssize_t sresult;
+    ssize_t stotal;
+    
+    if (argc != 3) {
+        fprintf(stderr, "wrong number of arguments!..\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+        exit_sys("socket");
+
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+
+    if ((result = getaddrinfo(argv[1], argv[2], &hints, &ai)) != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(result));
+        exit(EXIT_FAILURE);
+    }
+
+    for (ri = ai; ri != NULL; ri = ri->ai_next) 
+        if (connect(sock, ri->ai_addr, ri->ai_addrlen) != -1) 
+            break;
+    
+    if (ri == NULL)
+        exit_sys("connect");
+
+    freeaddrinfo(ai);
+
+    printf("Connected...\n");
+
+    stotal = 0;
+    for (;;) {
+        printf("send calls...\n");
+        if ((sresult = send(sock, buf, BUFFER_SIZE, 0)) == -1)
+            exit_sys("send");
+        stotal += sresult;
+        printf("bytes sent: %jd, total bytes sent: %jd\n", sresult, stotal);
+    }
+
+    close(sock);
+    
+    return 0;
+}
+
+void exit_sys(const char *msg)
+{
+    perror(msg);
+
+    exit(EXIT_FAILURE);
+}
+
+<BURADA KALDIK>
+/*--------------------------------------------------------------------------------------------------------------------------   
+    Yukarıda basit olarak açıkladığımız akış kontrolünün TCP'de bazı detayları vardır. 
+    
+    TCP'de bunun için "pencere (window)" kavramı kullanılmaktadır. Pencerenin bir büyüklüğü (window size) vardır. Pencere büyüklüğü
+    TCP başlığında velirtilmektedir. Pencere büyüklüğü demek "hiç ACK gelmediği durumda göndericinin en fazla gönderebileceği 
+    byte sayısı" demektir. Örneğin pencere genişliğinin 8K olması demek "alıcı ACK göndermedikten sonra göndericinin en fazla 
+    8K gönderebilmesi" demektir. Pencere genişliği alıcı taraf tarafından gönderici tarafa bildirilir. Örneğin pencere genişliği
+    alıcı taraf için 8K olsun. Bu durumda gönderici taraf sırasıyla 1K + 1K + 1K + 1K + 1K uzunluğunda toplam 5K'lık bilgiyi 
+    karşı tarafa göndermiş olsun. Eğer henüz ACK gelmemişse gönderici taraf en fazla 3K kadar daha bilgi gönderebilir. 
+    
+    TCP'de her ACK sırasında yeni pencere genişliği de karşı tarafa gönderilmek zorundadır. Yani ACK paketi gönderilirken  aynı 
+    zamanda yeni pencere genişliği de gönderilmektedir. ACK paketi yalnızca alındı bilgisinigöndermek için değil pencere genişliğini
+    ayarlamak için de gönderilebilmektedir. Başka bir deyişle bir taraf "yalnızca bilgi aldığı için" ACK göndermek zorunda değildir. 
+    Hiç bilgi almadığı halde yeni pencere genişliğini karşı tarafa bildirmek için de ACK gönderebilir. Pencere genişliği en fazla 
+    64K olabilir. Çünkü bunun için TCP başlığında 16 bit yer ayrılmıştır. 
+
+    Şimdi bir tarafın diğer tarafa send fonksiyonu ile sürekli bilgi gönderdiğini ancak diğer tarafın bilgiyi recv ile okumadığını 
+    düşünelim. İşletim sisteminin alıcı taraf için oluşturduğu alma tamponunun 1MB olduğunu düşünelim. Alıcı taraf muhtemelen bilgi
+    geldikçe ACK yaparken 64K'lık pencere genişliğini karşı tarafa bildirecektir. Ancak zamanla alma tamponu dolduğu için bu pencere 
+    genişliğini düşürecek en sonunda ACK ile pencere genişliğini 0 yapacak ve karşı atarafa "artık gönderme" deiyecektir. Pencere 
+    genişliği ile alma tamponunun genişliği birbirine karıştırılmamalıdır. Alma tamponu gelen bilgilerin yerleştirildiği tampondur. 
+    Pencere genişliği karşı tarafın ACK almadıktan sonra gönderebileceği makismum byte sayısıdır. 
+
+    Pekiyi pencere genişlikleri ve sıra numaraları bağlantı sırasında nasıl karşı tarafa bildirilmektedir? İşte bağlantı kurulurken 
+    client taraf SYN paketi içerisinde kendi başlangıç sıra numarasını karşı tarafa iletmektedir. Server da bağlantıyı kabul ederken 
+    yine SYN (ya da SYN + ACK) paketinde kendi sıra numarasını karşı tarafa bildirmektedir. Pencere genişliği de aslında ilk kez 
+    bağlantı yapılarken ACK paketlerinde belirtilmektedir. 
+
+    TCP/IP stack gerçekleştirimleri ACK stratejisi için bazı yöntemler uygulamaktadır. Örneğin eğer gönderilecek paket varsa 
+    bununla birlikte ACK paketinin gönderilmesi, ACK'ların iki paket biriktirildikten sonra gönderilmesi gibi. Benzer biçimde 
+    pencere genişliklerinin ayarlanması için de bazı stratejiler izlenebilmektedir.  Bunun için "Tcp IP Protocol Suite" kitabının 
+    466'ıncı sayfasına başvurabilirsiniz.
+
+    <BURADA KALDIK>
 
     TCP paketindeki önemli Flag'lerden birisi de "RST" bitidir. Buna "reset isteği" denilmektedir. Bir taraf RST bayrağı set edilmiş paket alırsa artık karşı tarafın
     "abnormal" bir biçimde bağlantıyı kopartıp yeniden bağlanma talep ettiği anlaşılır. Normal sonlanma el sıkışarak başarılı bir biçimde yapılırken RST işlemi anormal
     sonlanmaları temsil eder. Örneğin soket kütüphanelerinde hiç shutdown yapmadan soket close edilirse close eden taraf karşı tarafa RST paketi göndermektedir. 
     Halbuki önce shutdown yapılırsa el sıkışmalı sonlanma gerçekleştirilir. O halde her zaman aktif soketler shutdown yapıldıktan sonra close edilmelidir.   
-
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
