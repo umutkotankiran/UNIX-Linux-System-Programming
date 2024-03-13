@@ -3872,7 +3872,7 @@ void exit_sys(const char *msg)
     (Yani aslında bir POSIX sisteminde /etc/passwd ve /etc/group dosyaları bu isimlerde ve Linux'tak içerikte bulunmak zorunda değildir. 
     Ancak bu bilgileri alan aşağıda açıklayacağımız POSIX fonksiyonları bulunmak zorundadır.)
 ---------------------------------------------------------------------------------------------------------------------------*/
-<BURADA KALDIK>
+
 /*--------------------------------------------------------------------------------------------------------------------------
     /etc/passwd dosyası üzerinde parse işlemi yapan fonksiyonların prototipleri <pwd.h> dosyası içerisinde bulundurulmuştur. 
     getpwnam POSIX fonksiyonu bir kullanıcının ismini alarak o kullanıcı hakkında /etc/passwd dosyasında belirtilen bilgileri 
@@ -6060,6 +6060,7 @@ void exit_sys(const char *msg)
 	exit(EXIT_FAILURE);
 }
 
+<BURADA KALDIK>
 /*--------------------------------------------------------------------------------------------------------------------------
     Anımsanacağı gibi "dosya betimleyici tablosu (file descriptor table)" proses kontrol blok yoluyla erişilebilen dosy anesnelerinin 
     adreslerinin tutulduğu bir gösterici dizisi biçimindeydi. İşletim sisteminin çekirdeği ne zaman bir dosya açılsa o dosya için
@@ -51480,6 +51481,196 @@ int main()
     aracının "nmake" ismiyle başka versiyonunu geliştirmiştir. Ancak Microsoft uzun bir süredir "msbuild" denilen başka bir
     build sistemini kulanmaktadır. Örneğin Microsoft'un Visual Studio IDE'si arka planda bu "msbuild" aracını kullanmaktadır. 
     Qt Framework'ünde "qmake" isimli üst düzey make aracı kullanılmaktadır. Bazı IDE'ler "cmake" kullanmaktadır.  
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+                                            126. Ders 03/10/2024 - Pazar
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    En fazla kullanılan build otomasyon aracı "make" isimli araçtır. make aracını kullanmak için ismine "make dosyası" denilen
+    bir dosya oluşturulur. Sonra bu dosya "make" isimli program ile işletilir. Dolayısıyla make aracının kullanılması için make 
+    dosyalarının nasıl oluşturulduğunun bilinmesi gerekir. Make dosyaları aslında kendine özgü bir dil ile oluşturulmaktadır. 
+    Bu make dilinin kendi sentaksı ve semantiği vardır. make aracı için çeşitli kitaplar ve öğretici dokümanlar (tutorials)
+    oluşturulmuştur. Orijinal dokümanlarına aşağıdaki bağlantıdan erişilebilir:
+
+    https://www.gnu.org/software/make/manual/
+
+    Yukarıda da belirttiğimiz gibi "make" aracı değişik sistemlerde birbirine benzer biçimde bulunmaktadır. Microsoft'un make
+    aracına "nmake" denilmektedir. GNU Projesi kapsamında bu make aracı yeniden yazılmıştır. Bugün ağırlıklı olarak GNU projesindeki
+    make aracı kullanılmaktadır. Bu araca "GNU Make" de denilmektedir. 
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Bir make dosyası "kurallardan (rules)" oluşmaktadır. Bir kuralın (rule) geneil biçimi şöyledir:
+
+    hedef (target) : ön_koşullar (prerequisites)
+        işlemler (recipes)
+
+    Örneğin:
+
+    app: a.o b.o c.o
+        gcc -o app a.o b.o c.o
+
+    Burada "app" hedefi, "a.o b.o c.o" ön koşulları ve "gcc -o app a.o b.o c.o" satırı da "işlemleri (recipes)" belirtmektedir. 
+    Hedef genellik bir tane olur. Ancak ön koşullar birden fazla olabilir. İşlemler tek bir satırdan oluşmak zorunda değildir. 
+    Eğer birden fazla satırdan oluşacaksa satırlar alt alta yazılır. İşlemler belirtilirken yukarıdaki satırdan bir TAB içeriye
+    girinti verilmek zorundadır. Örneğin:
+
+    app: a.o b.o c.o
+    <TAB>gcc -o app a.o b.o c.o
+
+    Kuraldaki hedef ve ön koşullar tipik olarak birer dosyadır. Kuralın anlamı şöyledir: Ön koşulalrda belirtilen dosyaların 
+    herhangi birinin tarih ve zamanı hedefte belirtilen dosyanın tarih ve zamanından ileri ise (yani bunlar güncellenmişse)
+    bu durumda belirtilen işlemler yapılır. Yukarıdkai kuralı yeniden inceleyiniz:
+
+    app: a.o b.o c.o
+        gcc -o app a.o b.o c.o
+
+    Burada eğer "a.o" ya da "b.o" ya da "c.o" dosyalarının tarih ve zamanı "app" dosyasının tarih ve zamanından ilerideyse
+    aşağıdaki kabuk komutu çalıştırılacaktır:
+
+    gcc -o app a.o b.o c.o
+
+    Bu link işlemi anlamına gelir. Link işlemindne sonra artık "app" dısyasının tarih ve zamanı ön koşul dosyalarından daha
+    ileride olacağı için kural "güncel (up to date)" hale gelir. Artık bu kural işletildiğinde bu link işlemi yapılmayacaktır. 
+    Bu link işleminin yeniden yapılabilmesi için "a.o" ya da "b.o" ya da "c.o" dosyalarında güncelleme yapılmış olması gerekir. 
+    Bu dosyalar derleme işlem sonucunda oluşacağına göre bu dosyaların güncellenmesi aslında bunlara ilişkin ".c" dosyalarının 
+    derlenmesiyle olabilir. Şimdi aşağıdaki kuralları yazalım:
+
+    a.o: a.c
+        gcc -c a.c
+
+    b.o: b.c
+        gcc -c b.c
+
+    c.o: c.c
+        gcc -c c.c
+
+    Bu kurallar "ilgili .c dosyalarında bir değişiklik olduğunda onları yeniden derle" anlamına gelmektedir. Şimdi önceki kuralla
+    bu kuralları bir araya getirelim:
+
+    app: a.o b.o c.o
+        gcc -o app a.o b.o c.o
+    a.o: a.c
+        gcc -c a.c
+    b.o: b.c
+        gcc -c b.c
+    c.o: c.c
+        gcc -c c.c
+
+    make programı çalıştırıldığında önce program make dosyasından hareketle bir "bağımlılık grafı (dependency graph)" 
+    oluşturmaktadır. Bağımlılık grafı "hangi dosya hangi dosyanın durumuna bağlı" biçimin de oluşturulan bir graftır. 
+    Yukarıdaki örnekte "a.o", "b.o" ve "c.o" dosyaları aşağıdaki kurallara bağımlıdır. Daha sonra make programı sırasıyla 
+    bu grafa uygun olarak aşağıdan yukarıya kuralları işletmektedir. Yukarıdkai örnekte birinci kural ikinci, üçüncü
+    ve dördüncü kurallara bağımlıdır. Dolayısıyla önce bu kurallar işletilip daha sonra birinci kural işletilir. Böylece bu
+    make dosyasından şöyle sonuç çıkmaktadır: "Herhangi bir .c dosya değiştirildiğinde onu dele ve hep birlikte link işlemi 
+    yap". 
+
+    Kuralın hedefindeki dosya yoksa koşulun sağlandığı kabul edilmektedir. Yani bu durumda ilgili işlemler yapılacaktır. 
+    Yukarıdaki örnekte "object dosyalarını silersek" bu duurmda derleme işlemlerinin hepsi yapılacaktır. Normal olarak her 
+    ön koşul dosyasının bir bir hedefle ilişkili oılması beklenir. Yani ön koşulda belirtilen dosyaların var olması gerekmektedir. 
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    make dosyası hazırlandıktan sonra make programı ile dosya işletilir. make programı işletilecek dosyayaı -f ya da --file 
+    seçeneği ile komut satırı argümanından almaktadır. Örneğin:
+
+    $ make -f project.mak
+
+    Ancak -f seçeneği kullanılmazsa make programı sırasıyla "GNUmakefile", "makefile" ve "Makefile" dosyalarını aramaktadır. 
+    GNU dünyasındaki genel eğilim projenin make dosyasının "Makefile" biçiminde isimlendirilmesidir. Açık kaynak kodlu bir 
+    yazılımda projenin make dosyasının da verilmiş olması beklenir. Böylece kaynak kodları elde eden kişiler yeniden derlemeyi
+    komut satırında "make" yazarak yapabilirler. 
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Aslında make programı çalıştırılırken program belli bir hedefi gerçekleştirmek için işlem yapar. Gerçekleştirilecek 
+    hedef make programında komut satırı argümanı olarak verilmektedir. Eğer hedef belirtilmezse ilk hedef gerçekleştirilmeye 
+    çalıştırılır. Örneğin:
+
+    # Makefile
+    
+    app: a.o b.o c.o
+        gcc -o app a.o b.o c.o
+    a.o: a.c		
+        gcc -c a.c		
+    b.o: b.c
+        gcc -c b.c
+    c.o: c.c
+        gcc -c c.c
+
+    project: project.c
+        gcc -o project project.c
+
+    Burada birbirinden bağımsız iki hedef vardır: app ve project. Biz make programını hedef belirtmeden çalıştırırsak ilk 
+    hedef gerçekleştirilmeye çalışılır. Ancak belli bir hedefin de gerçekleştirilmesini sağlayabiliriz. Örneğin:
+
+    $ make project
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Bir kuralda ön koşul yoksa kuralın sağlandığı varsayılmaktadır. Yani bu durumda doğrudan belirtilen işlemler (recipes)    
+    yapılır. Örneğin:
+
+    clean:
+        rm -f *.o
+
+    Burada make programını aşağıdaki çalıştırmış olalım:
+
+    $ make clean
+
+    Bu durumda tüm ".o" dosyaları silinecektir. Örneğin:
+
+    # Makefile
+
+    app: a.o b.o c.o
+        gcc -o app a.o b.o c.o
+    a.o: a.c		
+        gcc -c a.c		
+    b.o: b.c
+        gcc -c b.c
+    c.o: c.c
+        gcc -c c.c
+
+    clean:
+        rm -f *.o
+
+    install:
+        sudo cp app /usr/local/bin
+
+    Burada "clean" hedefi rebuild işlemi için object dosyaları silmektedir. install hedefi ise elde edilen programı belli 
+    bir yere  kopyalamaktadır.
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Bir kaynak dosya bir başlık dosyasını kullanıyorsa bağımlılıkta bu başlık dosyasının da belirtilmesi uygun olur. Çünkü
+    bu başlık dosyasında bir güncelleme yapıldığında bu kaynak dosyanın da yeniden derlenmesi beklenir. Örneğin:
+
+    a.o: a.c app.h
+        gcc -c app.c
+
+    Burada artık app.h dosyası üzerinde bir değişiklik yapıldığıunda derleme işlemi yeniden yapılacaktır. 
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    <BURADA KALDIK>
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 
