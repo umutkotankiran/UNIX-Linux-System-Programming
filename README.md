@@ -16,3 +16,4 @@
 <h4>	13.Ders	--->	fstat lstat stat example	<h4>
 <h4>	14.Ders	--->	remove unlink chmod fchmod chown truncate ftruncate	<h4>
 <h4>	15.Ders	--->	fchown mkdir rmdir getpwuid getpwent setpwent endpwent getgrnam getgrgid getgrent setgrent endgrent 	<h4>
+...
