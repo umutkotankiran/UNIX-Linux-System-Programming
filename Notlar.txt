@@ -61441,7 +61441,7 @@ mode=666
 rm -f $module
 
 /*--------------------------------------------------------------------------------------------------------------------------
-    Aşağıdaki örnekte aygıt sürücüsü içerisindeki count isimli global değişken proc dosya sistemindeki "profs-driver" isimli
+    Aşağıdaki örnekte aygıt sürücüsü içerisindeki count isimli global değişken proc dosya sistemindeki "procfs-driver" isimli
     bir dosya ile temsil edilmiştir. Bu dosyadan okuma yapıldığında bu count değişkeninin değeri elde edilmektedir. Dosyaya 
     yazma yapıldığında bu count değişkeninin değeri güncellenmektedir. Yazma işleminde dosya göstericisi dikkate alınmamış ve
     yazma işlemi her zaman sanki ilgili dosyanın başından itibaren yapılıyormuş gibi bir etki oluşturulmuştur.
@@ -62697,7 +62697,7 @@ void exit_sys(const char *msg)
 }
 
 /*--------------------------------------------------------------------------------------------------------------------------
-    Şimdi de aygıt sürücülerde zamanla işlemlerinin nasıl yapılacağı üzerinde duracağız. Çekirdeğin zamanlama mekanizması
+    Şimdi de aygıt sürücülerde zamanlama işlemlerinin nasıl yapılacağı üzerinde duracağız. Çekirdeğin zamanlama mekanizması
     periyodik oluşturulan donanım kesmeleriyle sağlanmaktadır. Bu kesmelere genel olarak "timer kesmeleri" ya da Linux 
     terminolojisinde "jiffy" denilmektedir. Eskiden tek CPU'lu makineler kullanıyordu ve eski işlemcilerde işlemcinin içerisinde 
     periyodik kesme oluşturacak bir mekanizma yoktu. Ancak daha sonraları işlemcilere kendi içerisinde periyodik kesme 
@@ -62725,20 +62725,20 @@ void exit_sys(const char *msg)
     değişkeni artırmaktadır. Böylece eğer timer kesme periyodu biliniyorsa iki jiffies değeri arasındaki farka bakılarak 
     bir zaman ölçümü mümkün olabilmektedir.
 
-    Timer frekeansı Linux kernel içerisindeki HZ isimli sembolik sabitle bildirilmiştir. Timer periyodu çekirdek konfigüre 
+    Timer frekeansı Linux kernel içerisindeki HZ isimli sembolik sabitle belirtilmiştir. Timer periyodu çekirdek konfigüre 
     edilirken değiştirilebilmektedir. Genellikle bu süre 1 ms, 4 ms ya da 10 ms olmaktadır. (Ancak değişik mimarilerde farklı 
     değerlerde olabilir.) Örneğin kursun yapıldığı sanal makinede timer periyodu 4 milisaneye'dir. Bu da saniyede 250 kez timer
     kesmesinin oluşacağı anlamına gelmektedir. Başka bir dyeişle bu makşnede HZ sembolik sabiti 250 olarak define edilmiştir. 
 
-    İşte timer kesmesi her oluşturduğunda işletim sisteminin kesme kodu (interrupt handler) devereye girip "jiffies" isimli global 
-    değişkeni 1 artırmaktadır. Bu jiffies değişkeni unsigned long türdendir. Bildindiği gibi unsigned long türü 32 bit Linux 
-    sistemlerinde 32 bit 64 bit Linux sistemlerinde 64 bittir. 32 bit Linux sistemlerinde ayrıca jiffies_64 isimli bir değişken 
-    daha vardır. Bu değişken hem 32 bit sistemde hem de 64 bit sistemde 64 bitliktir. 32 bit sistemde jiffies değişkeni 32 bit 
-    olduğu için bilgisayar uzun süre açık kalırsa taşma (overflow) oluşabilmektedir. Ancak 64 bit sistemlerde taşma mümkün değildir. 
-    32 bit sistemlerde jiffies_64 değeri çekirdek tarafından iki ayrı makine komutuyla güncellenmektedir. Çünkü 32 bit sistemlerde 
-    64 bit değeri belleğe tek hamlede yazmak mümkün değildir. Bu nedenle jiffies_64 değerinin taşma durumunda yanlış okunabilme 
-    olasılığı vardır. Hem 32 bit hem 64 bit sistemlerde 64 bitlik jiffies değerini düzgün bir biçimde okuyabilmek için get_jiffies_64
-    isimli fonksiyon bulundurulmuştur:
+    İşte timer kesmesi her oluşturduğunda işletim sisteminin kesme kodu (interrupt handler) devereye girip "jiffies" isimli 
+    global  değişkeni 1 artırmaktadır. Bu jiffies değişkeni unsigned long türdendir. Bildindiği gibi unsigned long türü 32 
+    bit Linux sistemlerinde 32 bit 64 bit Linux sistemlerinde 64 bittir. 32 bit Linux sistemlerinde ayrıca jiffies_64 isimli 
+    bir değişken daha vardır. Bu değişken hem 32 bit sistemde hem de 64 bit sistemde 64 bitliktir. 32 bit sistemde jiffies 
+    değişkeni 32 bit olduğu için bilgisayar uzun süre açık kalırsa taşma (overflow) oluşabilmektedir. Ancak 64 bit sistemlerde 
+    taşma mümkün değildir. 32 bit sistemlerde jiffies_64 değeri çekirdek tarafından iki ayrı makine komutuyla güncellenmektedir. 
+    Çünkü 32 bit sistemlerde 64 bit değeri belleğe tek hamlede yazmak mümkün değildir. Bu nedenle jiffies_64 değerinin taşma 
+    durumunda yanlış okunabilme olasılığı vardır. Hem 32 bit hem 64 bit sistemlerde 64 bitlik jiffies değerini düzgün bir 
+    biçimde okuyabilmek için get_jiffies_64 isimli fonksiyon bulundurulmuştur:
 
     include <linux/jiffies.h>
     
@@ -63092,12 +63092,12 @@ clean:
     uykuya yatırmamaktadır. Yalnızca thread'ler arası geçiş oluşmasına yol açmaktadır. Yani bu fonksiyon uykuya dalmadan CPU'yu 
     bırakmak için kullanılmaktadır. schedule fonksiyonunu çağıran thread çalışma kuyruğunda (run queue) kalmaya devam eder. Yine
     çalışma sırası ona geldiğinde kaldığı yerden çalışmaya devam eder. Ancak meşgul bir döngü içerisinde schedule işlemi yine
-    önemli bir CPU zamanın harcanmasına yol açmaktadır. Bu nedenle uzun beklelemelerin yukarıdaki gibi yapılması tavsiye edilmemektedir. 
-    Uzun beklemelerin uykuya dalarak yapılması gerekir. 
+    önemli bir CPU zamanın harcanmasına yol açmaktadır. Bu nedenle uzun beklelemelerin yukarıdaki gibi yapılması tavsiye 
+    edilmemektedir. Uzun beklemelerin uykuya dalarak yapılması gerekir. 
 
-    Uzun beklemeler için bir wait kuyruğu oluşturulup wait_event_timeout ya da wait_event_interrptible_timeout fonksiyonlarıyla koşul 
-    0 yapılarak gerçekleştirilebilir. Ancak bunun için bir wait kuyruğunun oluşturulması gerekir. Bu işlemi zaten kendi içerisinde 
-    yapan özel fonksiyonlar vardır. 
+    Uzun beklemeler için bir wait kuyruğu oluşturulup wait_event_timeout ya da wait_event_interrptible_timeout fonksiyonlarıyla 
+    koşul  0 yapılarak gerçekleştirilebilir. Ancak bunun için bir wait kuyruğunun oluşturulması gerekir. Bu işlemi zaten kendi 
+    içerisinde yapan özel fonksiyonlar vardır. 
 
     schedule_timeout fonksiyonu belli bir jiffy zamanı geçene kadar thread'i çekirdek tarafından bu amaçla oluşturulmuş olan bir
     wait kuyruğunda bekletir. 
@@ -63114,12 +63114,11 @@ clean:
 
     Uzun beklemeyi kendi içerisinde schedule_timeout kullanarak yapan üç yardımcı fonksiyon da vardır:
 
-    #include <linux/delay.>
+    #include <linux/delay.h>
 
     void msleep(unsigned int msecs);
     unsigned long msleep_interruptible(unsigned int msecs);
     void ssleep(unsigned int secs);
-    void ssleep_interruptible(unsigned int secs);
 
     Aşağıdaki örnekte "jiffy-module" dizinindeki "sleep" dosyasından okuma yapıldığında (denemeyi cat yapabilirsiniz) 10 saniye 
     bekleme oluşacaktır. 
@@ -63407,7 +63406,7 @@ static int __init generic_init(void)
 {
 	add_timer(&g_mytimer);
 
-    mod_timer(&g_mytimer, jiffies + msecs_to_jiffies(50000));
+    mod_timer(&g_mytimer, jiffies + msecs_to_jiffies(5000));
 
     printk(KERN_INFO "timer-module module init...\n");
 
@@ -63418,15 +63417,14 @@ static void timer_proc(struct timer_list *tlist)
 {
     static int count = 0;
 
-
 	if (count == 5) {
 		del_timer(&g_mytimer);
 		count = 0;
+		return;
 	}
-	else
-		++count;
+	++count;
 
-   	printk(KERN_INFO "timer callback...\n");
+   	printk(KERN_INFO "timer callback (%d)\n", count);
 
 	mod_timer(&g_mytimer, jiffies + msecs_to_jiffies(5000));
 }
@@ -63451,17 +63449,17 @@ clean:
 /*--------------------------------------------------------------------------------------------------------------------------
     Önceki konularda da UNIX/Linux sistemlerinde kernel mode'da çalışan işletim sistemine ait thread'ler olduğundan bahsetmiştik. 
     Bu thread'ler çalışma kuyruğunda (run queue) bulunan ve uykuya dalabilen işletim sisteminin bir parçası durumundaki 
-    thread'lerdir. İşletim sistemine ait bu thrad'ler çeşitli işlemlerden sorumludurlar. Linux işletim sisteminde bunların 
-    isimleri genellikle "user mode daemon"lar gibi sonu 'd' ile bitecek biçimde isimlendirilmiştir. Ancak çekirdeğe ait bu 
-    thread'lerin ismi 'k' (kernel'dan geliyor) ile başlatılmıştır. Örneğin "kupdated", "kswapd", "keventd" gibi. 
+    thread'lerdir. İşletim sistemine ait bu thread'ler çeşitli işlemlerden sorumludurlar. Linux işletim sisteminde kernel thread'ler 
+    genellikle "user mode daemon"lar gibi sonu 'd' ile bitecek biçimde isimlendirilmiştir. Ancak çekirdeğe ait olan bu thread'lerin 
+    ismi 'k' (kernel'dan geliyor) ile başlatılmıştır. Örneğin "kupdated", "kswapd", "keventd" gibi. 
 
     İşte aygıt sürücüler de isterlerse arka planda kernel mode'da bir proses gibi çalışan thread'ler yaratabilirler. Ancak bu 
-    thread'ler bir proses ile ilişkisiz biçimde çalıştırılmaktadır. Bu nedenle bunlar içerisinde current değişkeni, ve copy_to_user 
-    ya da copy_from_user gibi fonksiyonlar kullanılmaz. 
+    thread'ler bir proses ile ilişkisiz biçimde çalıştırılmaktadır. Bu nedenle bunlar içerisinde current makrosu, ve copy_to_user 
+    ya da copy_from_user gibi fonksiyonlar kullanılamaz. 
 
-    Aygıt sürücü kodlarımız genellikle bir olay olduğunda (örneğin kesme gibi), ya da user mode'dan çağrıldığında (read, write, 
-    ioctl gibi) çalıştırılmaktadır. Ancak kernel thread'ler aygıt sürücüye sanki bir programmış gibi kernel mode'da sürekli çalışma 
-    imkanı vermektedir. 
+    Aygıt sürücü kodlarımız genellikle bir olay olduğunda (örneğin kesme gibi) ya da user mode'dan çağrıldığında (read, write, 
+    ioctl gibi) çalıştırılmaktadır. Ancak kernel thread'ler aygıt sürücüye sanki bir programmış gibi kernel mode'da sürekli 
+    çalışma imkanı vermektedir. 
 
     Kernel thread'ler sırasıyla şu adımlarlardan geçilerek kullanılmaktadır:
 
@@ -63511,11 +63509,11 @@ clean:
     int kthread_stop(struct task_struct *ts);
 
     Fonksiyon thread sonlanana kadar blokeye yol açar. Fonksiyon thread fonksiyonunun exit koduyla (yani thread fonksiyonunun 
-    geri dönüş değeri ile) geri dönmektedir. Genellikle programcılar thread fonksiyonlarını başarı durumunda sıfır, başarısızlık durumunda 
-    sıfır dışı bir değerle geri döndürmektedir. Burada önemli nokta kthread_stop fonksiyonunun kernel thread'i zorla sonlandırılmadığıdır. 
-    Kernel thread'in sonlanması zorla yapılmaz. kthread_stop fonksiyonu bir bayrağı set eder. Kernel thread de tipik olarak bir döngü 
-    içerisinde "bu bayrak set edilmiş mi" diye bakar. Eğer bayrak set edilmişse kendini sonlandırır. Kernel thread'in bu bayrağa 
-    bakması kthread_should_stop fonksiyonuyla yapılmaktadır. 
+    geri dönüş değeri ile) geri dönmektedir. Genellikle programcılar thread fonksiyonlarını başarı durumunda sıfır, başarısızlık 
+    durumunda sıfır dışı bir değerle geri döndürmektedir. Burada önemli nokta kthread_stop fonksiyonunun kernel thread'i zorla 
+    sonlandırılmadığıdır. Kernel thread'in sonlanması zorla yapılmaz. kthread_stop fonksiyonu bir bayrağı set eder. Kernel thread 
+    de tipik olarak bir döngü içerisinde "bu bayrak set edilmiş mi" diye bakar. Eğer bayrak set edilmişse kendini sonlandırır. 
+    Kernel thread'in bu bayrağa bakması kthread_should_stop fonksiyonuyla yapılmaktadır. 
 
     #include <linux/kthread.h>
 
@@ -63534,7 +63532,7 @@ clean:
     döner. O fonksiyonda da yaratılmış thread kaynakları otomatik boşaltılır. Yani biz bir thread yarattığımız zaman 
     onun yok edilmesi thread fonksiyonu bittiğinde otomatik yapılmaktadır. 
 
-    Kernel thread'in kendisni sonşandırması do_exit fonksiyonuyla sağlanabilmektedir. Aslında do_exit fonksiyonu prosesleri
+    Kernel thread'in kendisini sonşandırması do_exit fonksiyonuyla sağlanabilmektedir. Aslında do_exit fonksiyonu prosesleri
     sonlandıran sys_exit fonksiyonun doğrudan çağırdığı taban fonksiyondur. 
 
     #include <linux/kernel.h>
@@ -63605,6 +63603,7 @@ static void __exit generic_exit(void)
 module_init(generic_init);
 module_exit(generic_exit);
 
+# Makefile
 
 obj-m += $(file).o
 
@@ -63612,17 +63611,6 @@ all:
 	make -C /lib/modules/$(shell uname -r)/build M=${PWD} modules
 clean:
 	make -C /lib/modules/$(shell uname -r)/build M=${PWD} clean
-
-#!/bin/bash
-
-module=$1
-mode=666
-
-/sbin/insmod ./$module.ko ${@:2} || exit 1
-major=$(awk "\$2 == \"$module\" {print \$1}" /proc/devices)
-rm -f $module
-mknod $module c $major 0
-chmod $mode $module
 
 /*--------------------------------------------------------------------------------------------------------------------------
     İşlemcinin çalıştırmakta olduğu koda ara vererek başka bir kodu çalıştırması ve çalıştırma bittikten sonra kaldığı yerden 
@@ -63752,32 +63740,70 @@ chmod $mode $module
 
     int request_irq(unsigned int irq, irq_handler_t handler, unsigned long flags, const char *name, void *dev_id);
 
-    Fonksiyonun birinci parametresi IRQ numarasıdır. İkinci parametresi IRQ oluştuğunda çağrılacak fonksiyonu belirtmektedir. Bu fonksiyonun 
-    geri dönüş değeri irqreturn_t üründen (bu bir tamsayı türüdür) parametreleri de sırasıyla int ve void * türündendir. Örneğin:
+    Fonksiyonun birinci parametresi IRQ numarasını, ikinci parametresi IRQ oluştuğunda çağrılacak fonksiyonu belirtmektedir. Bu 
+    fonksiyonun geri dönüş değeri irqreturn_t türünden parametreleri de sırasıyla int ve void * türündendir. Örneğin:
 
     irqreturn_t my_irq_handler(int irq, void *dev_id)
     {
         ...
     }
 
-    Fonksiyonun üçüncü parametresi bazı bayraklardan oluşur. Bu bayrak 0 geçilebilir ya da örneğin IRQF_SHARED geçilebilir. Diğer 
-    seçenkler için dokümanlara başvurabilirsiniz. IRQF_SHARED aynı kesmenin birden fazla aygıt sürücü tarafından kullanılabileceği 
-    anlamına gelmektedir. (Tabii biz ilk register ettiren değilsek daha önce resgister ettirenlerin bu bayrağı kullanmış olması 
-    gerekir. Aksi halde biz de bu bayrağı kullanamayız.) Fonksiyonun dördüncü parametresi "/proc/interrupts" dosyasına görüntülenecek 
-    ismi belirtir. Son parametre  ise sistem genelinde tek olan bir nesnenin adresi olarak girilmelidir. Aygıt sürücü programcıları 
-    bu parametreye tipik olarak aygıt yapısını ya da çağrılacak foksiyonu girerler. irq_request fonksiyonu başarı durumunda 0 değerine 
-    başarısızlık durumunda negatif hata değerine geri dönmektedir. 
-    <BURADA KALDIK>
+    Buradaki irqreturn_t türü bir enum türü olarak typedef edilmiştir. Bu enum türünün elemanları şunlardır:
+
+    enum irqreturn {
+        IRQ_NONE		= (0 << 0),
+        IRQ_HANDLED		= (1 << 0),
+        IRQ_WAKE_THREAD		= (1 << 1),
+    };
+
+    typedef enum irqreturn irqreturn_t;
+
+    request_irt fonksiyonun üçüncü parametresi bazı bayraklardan oluşur. Bu bayrak 0 geçilebilir ya da örneğin IRQF_SHARED 
+    geçilebilir. Diğer seçenkler için dokümanlara başvurabilirsiniz. IRQF_SHARED aynı kesmenin birden fazla aygıt sürücü tarafından 
+    kullanılabileceği anlamına gelmektedir. (Tabii biz ilk register ettiren değilsek daha önce resgister ettirenlerin bu bayrağı 
+    kullanmış olması gerekir. Aksi halde biz de bu bayrağı kullanamayız.) Fonksiyonun dördüncü parametresi "/proc/interrupts" 
+    dosyasında görüntülenecek ismi belirtir. Son parametre ise sistem genelinde tek olan bir nesnenin adresi olarak girilmelidir. 
+    Aygıt sürücü programcıları bu parametreye tipik olarak aygıt yapısını ya da çağrılacak foksiyonu girerler. Bu parametre IRQ
+    handler fonksiyonuna ikinci parametre olarak geçilmektedir. Fonksiyon başarı durumunda o değerine başarısızlık durumunda negatif 
+    hata değerine geri dönmelidir. Örneğin:
+
+    if ((result = request_irq(1, my_irq_handler, IRQF_SHARED, "my_irq1", NULL)) != 0) {
+        ....
+    	return result;
+	}
+
     Bir kesme kodu request_irq fonksiyonuyla register ettirilmişse bunun geri alınması free_irq fonksiyonuyla yapılmaktadır:
+
+    #include <linux/interrupt.h>
 
     const void *free_irq(unsigned int irq, void *dev_id);
 
     Fonksiyonun birinci parametresi silinecek irq numarasını, ikinci parametresi irq_reuest fonksiyonuna girilen son parametreyi 
-    belirtir. Fonksiyon başarı durumunda aygıt ismine, başarısızlık durumunda NULL adrese geri dönmektedir. 
+    belirtir. Fonksiyon başarı durumunda aygıt irq_request fonksiyonunda verilen isme, başarısızlık durumunda NULL adrese geri 
+    dönmektedir. Geri dönüş değeri bir hata kodu ieçrmemektedir. Normal olarak fonksiyonun ikinci parametresine request_irq 
+    fonksiyonunun son parametresiyle aynı değer geçilir. Bu parametrenin neden bu fonksiyona geirildiğinin bazı ayrıntıları vardır. 
+    Örneğin:
 
-    Bazen sistem programcısı belli bir IRQ'yu belli süre için disable etmek isteyebilir. Bunun disable_irq ve enable_irq isimli 
-    iki kernel fonksiyonu kullanılmaktadır. Bu fonksiyonlar belli numaralı bir IRQ'yu disable, enable etmeketdir. Bu işlemi 
-    doğrudan kesme denetleyicisini (PIC ya da IOAPIC) programlayarak yapmakmaktadır. 
+    if (free_irq(1, NULL) == NULL) 
+		printk(KERN_INFO "cannot free IRQ\n");
+
+
+    Pekiyi IRQ fonksiyonundan (IRQ habdler) hangi değerle geri dönülmelidir. Aslında programcı bu fonksiyondan ya IRQ_NONE 
+    değeri ile ya da IRQ_HANDLED değeri ile geri döner. Eğer programcı kesme kodu içerisinde yapmak istediği şeyi yapmışsa
+    fonksiyondan IRQ_HANDLED, yapamamışsa ya da yapmak istememişse fonksiyondan IRQ_NONE değeri ile geri döner. Örneğin:
+
+    static irqreturn_t my_irq_handler(int irq, void *dev_id)
+    {
+        ...
+
+        return IRQ_HANDLED;
+    }
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Bazen sistem programcısı belli bir IRQ'yu belli süre için disable etmek isteyebilir. Bunun için disable_irq ve enable_irq 
+    isimli iki kernel fonksiyonu kullanılmaktadır. Bu fonksiyonlar belli numaralı bir IRQ'yu disable ve enable etmeketdir. Ancak 
+    bu fonksiyonlar bu işlemi doğrudan kesme denetleyicisini (PIC ya da IOAPIC) programlayarak yapmamaktadır. 
 
     void disable_irq(unsigned int irq);
     void enable_irq(unsigned int irq);
@@ -63786,26 +63812,54 @@ chmod $mode $module
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
-    Kesme mekanizmasının tipik örneklerinden biri klavye kullanımıdır. PC klavyesinde bir tuşa basıldığında klavye içerisindeki 
-    işlemci (keyboard encoder - Intel 8048) basılan ya da çekilen tuşun klavyedeki sıra numarasını (buna "scan code" denilmektedir) 
-    dış dünyaya seri bir biçimde kodlamaktadır. Bu bilgi bilgisayardaki klavye denetleyicisine (Intel 8042) gelir. Klavye 
-    denetleyicisi PIC ya da APIC'in 1 numaralı ucuna bağlıdır ve bu uçtan IRQ1 kesmesini oluşturur. Ama basılan ve çekilen tuşun 
-    scan kodunu kendi içerisinde saklar. Böylece tuşa basıldığında ve parmek tuştan çekildiğinde işletim sisteminni IRQ1 kesme 
-    kodu çalışmaktadır. Bu kodda klavye denetleyicisinden basılan ya da çekilen kodun scan kodu alınarak bir yazılımsal kuyruk 
-    sistemine yerleştirilmektedir. stdin terminal sürücüsü aslında bu kuyruktan okumayı yapmaktadır. 
+    Donanımsal kesme mekanizmasının tipik örneklerinden biri klavye kullanımıdır. PC klavyesinde bir tuşa basıldığında klavye 
+    içerisindeki işlemci (keyboard encoder - Eskiden Intel 8048 ya da Holtek HT82K629B) basılan ya da çekilen tuşun klavyedeki 
+    sıra numarasını (buna "scan code" denilmektedir) dış dünyaya seri bir biçimde kodlamaktadır. Bu bilgi bilgisayardaki klavye 
+    denetleyicisine (Eskiden Intel 8042) gelir. Klavye denetleyicisi (keyboard controller) bu scan kodu kendi içerisinde bir 
+    yazmaçta saklar. PIC ya da IOAPIC'in 1 numaralı ucu klavye denetleyicisine bağlıdır ve bu uçtan IRQ1 kesmesini oluşturulmaktadır. 
+    Dolayısıyla biz bir tuşa bastığımızda otomatik olarak basılan tuşa ilişkin klavye scan kodu bilgisayar tarafına iletilir 
+    ve IRQ1 kesmesi oluşturulur. IRQ1 kesme kodu birincil olarak işletim sistemi tarafından ele alınmaktadır. İşletim sistemi 
+    de bu IRQ oluştuğunda aygıt sürücülerin belirlediği fonksiyonları çağırmaktadır. Klavyede yalnızca bir tuşa basılınca 
+    değil parmak tuştan çekildiğinde de yine klavye işlemcisi çekilen tuşun scan kodunu klavye denetleyicisine gönderip IRQ1 
+    kesmesinin oluşmasına yol açmaktadır. Yani hem tuşa basında hem de parmak tuştan çekildiğinde IRQ1 oluşmaktadır. Klavye 
+    terminolojisinde parmağın tuşa basılmasıyla gönderilen scan koda "make code", parmağın tuştan çekilmesiyle gönderilen koda
+    ise "break code" denilmektedir. Bugün PC'lerde kullandığımız klavyelerde parmak tuştan çekildiğinde önce PC tarafında bir 
+    F0 byte'ı ve sonra da tuşun scan kodu gönderilmektedir. Örneğin parmağımızı "A" tuşuna basıp çekelim şu scan kodlar bilgisayar
+    tarafında gönderilecektir:
+
+    <A'nın scan kodu> <F0> <A'nın scan kodu>
+
+    Ctrl, Shift, Alt, Caps-Lock gibi tuşların diğer tuşlardan bir farkı yoktur. Ctrl+C gibi bir tuşa basıdığı işletim sisteminin 
+    tuttuğu flag değişkenlerle tespit edilmektedir. Örneğin biz Ctrl+C tuşlarına basıp çekmiş olalım. Klavye işlemcisi bilgisayar
+    tarafında şu kodları gönderecektir:
+
+    <Ctrl scan kodu> <A'nın scan kodu> <F0> <A'nın scan kodu> <F0> <Ctrl scan kodu>
+
+    İşte Ctrl tuşuna basıldığını fark eden işletim sistemi bir flag'i set eder, parmak bu tuştan bırakıldığında flag'i reset 
+    eder. Böylece diğer tuşlara basıldığında bu flag'e bakılarak Ctrl tuşu ile bu tuşa basılıp basılmadığı anlaşılmaktadır. 
+
+    Pekiyi biz Linux'ta stdin dosyasından (0 numaralı betimleyici) okuma yaptığımızda neler olmaktadır? İşte aslında işletim 
+    sistemi bir tula basıldığında basılan tuşları klavye denetleyicisinde alır ve onları biz kuyruk sisteminde saklar. Terminal 
+    aygıt sürücüsü de bu kuyruğa başvurur. Kurukta hiç tuş yoksa thread'i bu amaçla oluşturulmuş bir wait kuruğunda bekletir. 
+    Klavyeden tuşa basılınca wait kuruğunda bekleyen thread'leri uyandırır. Yani okuma yapıldığında o anda klavyeden okuma 
+    yapılmamaktadır. Kuyruklanmış tuşlar okunmaktadır.
 
     Klavyedeki tuşların üzerinde yazan harflerin hiçbir önemi yoktur. Yani İngilizce klavye ile Türkçe klavye aynı tuşlar için 
-    aynı scan kodu göndermektedir. Basılan tuşun hangi tuş olduüu aslında dil ayarlarına bakılarak işletim sistemi tarafından 
-    anlamlandırılmaktadır. Klavye ile bilgisayar arasındaki iletişim tek yönlü değil çift yönlüdür. Yani Klavye işlemcisi de 
-    isterse klavye içerisindeki işlemciye komut gönderebilmektedir. Aslında klavye üzerindeki ışıkların yakılması da klavyenin 
-    içerisinde tuşa basılınca yapılmamaktadır. Işıklı tuşlara basıldığında gönderilen scan kod klavye denetleyicisi tarafından 
-    alınır ve kesme kodu yeniden klavye işlmcisine ışığı yak komutunu gönderir. Örneğin bilisayardaki işletim sistemi çökmüşse 
-    bu ışıklar yanmayacaktır. 
+    aynı scan kodu göndermektedir. Basılan tuşun hangi tuş olduğu aslında dil ayarlarına bakılarak işletim sistemi tarafından 
+    anlamlandırılmaktadır. 
+    
+    Klavye ile bilgisayar arasındaki iletişim tek yönlü değil çift yönlüdür. Yani klavye denetleyicisi de (PC tarafındaki 
+    denetleyici) isterse klavye içerisindeki işlemciye komutlar gönderebilmektedir. Aslında klavye üzerindeki ışıkların 
+    yakılması da klavyenin içerisinde tuşa basılınca yapılmamaktadır. Işıklı tuşlara basıldığında gönderilen scan kod klavye 
+    denetleyicisi tarafından alınır, eğer bu tuş ışıklı tuşlardan biri ise klavye denetleyicisi klavye işlemcisine "falanca 
+    ışığı yak" komutunu göndermektedir.  Özetle yeniden ifade edersek klavyedki ışıklar klaye devresi tarafından ilgili 
+    tuşlara basılınca yakılmamaktadır. Karşı taraftan emir geldiğinde yakılmaktadır. Tasarımın bu biçimde yapılmış olması
+    çok daha esnek bir kullanım oluşturmaktadır. 
 
-    Aşağıdaki örnekte klavyeden tuşa basıldığında ve çekildiğinde oluşan IRQ-1 ele alınmıştır.
+     Aşağıdaki örnekte klavyeden tuşa basıldığında ve çekildiğinde oluşan 1 numaralı IRQ ele alınıp işlenmiştir.
 ---------------------------------------------------------------------------------------------------------------------------*/
 
-/* generic-char-driver.c */
+/* irq-driver.c */
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -63829,7 +63883,7 @@ static int __init generic_init(void)
 {
 	int result;
 
-	if ((result = alloc_chrdev_region(&g_dev, 0, 1, "generic-char-driver")) < 0) {
+	if ((result = alloc_chrdev_region(&g_dev, 0, 1, "irq-driver")) < 0) {
 		printk(KERN_INFO "Cannot alloc char driver!...\n");
 		return result;
 	}
@@ -63848,12 +63902,14 @@ static int __init generic_init(void)
 		return result;
 	}
 
-	if ((result = request_irq(1, keyboard_irq_handler, IRQF_SHARED, "generic-char-driver-irq", &g_cdev)) != 0) {
+	if ((result = request_irq(1, keyboard_irq_handler, IRQF_SHARED, "irq-driver", &g_cdev)) != 0) {
+        cdev_del(g_cdev);
+	    unregister_chrdev_region(g_dev, 1);
 		printk(KERN_ERR "interrupt couldn't registered!...\n");
 		return result;
 	}
 
-	printk(KERN_INFO "Module initialized with %d:%d device number...\n", MAJOR(g_dev), MINOR(g_dev));
+    printk(KERN_INFO "irq-driver init...\n");
 
 	return 0;
 }
@@ -63864,7 +63920,8 @@ static irqreturn_t keyboard_irq_handler(int irq, void *dev_id)
 
 	++count;
 
-	printk(KERN_INFO "Keyboard IRQ occurred: %d\n", count);
+    if (count % 1000 == 0)
+	    printk(KERN_INFO "Keyboard IRQ occurred: %d\n", count);
 
 	return IRQ_HANDLED;
 }
@@ -63874,52 +63931,106 @@ static void __exit generic_exit(void)
 	free_irq(1, &g_cdev);
 	cdev_del(g_cdev);
 	unregister_chrdev_region(g_dev, 1);
-	printk(KERN_INFO "Goodbye...\n");
+
+    printk(KERN_INFO "irq-driver exit...\n");
 }
 
 module_init(generic_init);
 module_exit(generic_exit);
 
 /*--------------------------------------------------------------------------------------------------------------------------
-    CPU ile RAM arasında veri transferi aslında tamamen elektriksel düzeyde 1'lerle 0'larla (5V/0V) gerçekleşmektedir. CPU'nun adres uçları 
-    (address bus) RAM'dan hangi adresten başlayan bilginin transfer edileceğini belirlemek için kullanılır. CPU'nun data uçları ise bilginin alınıp 
-    gönderilmesinde kullanılmaktadır. İşlemin okuma mı yazma mı olduğu genellikle R/W biçiminde isimlendirilen ayrı bir control ucuyla yapılmaktadır. 
-    Örneğin MOV EAX, [XXXXXXXX] komutu 32 bit INTEL işlemcilerinde RAM'deki XXXXXXXX adresinden başlayan 4 byte bilginin CPU içerisindeki EAX yazmacına 
-    çekileceği anlamına gelmektedir. Bu makina komutu işletilirken CPU önce erişilecek adres olan XXXXXXXX adresini adres uçlarına elektriksel işaret olarka kodlar.
-    RAM bu adresi alır bu adresten başlayan 4 byte'lık bilgiyi data uçlarına elektirksel olarak kodlar. CPU'da bu açlardan bilgiyi elektirksel olarak alır ve 
-    EAX yazmacına yerleştirir. CPU'nun adres uçları RAM'in uçlarına, CPU'nun data uçları ise RAM'in data uçlarına bağlıdır. Tranfer yönü R/W ucuyla belirlenmektedir. 
-    Tabii CPU'lar bugün DRAM belleklerden daha hızlıdır. Dolayısıyla CPU RAM'den yanıt gelene kadar beklemektedir (wait state). 
-
-    Bir bilisayar sisteminde yalnızca Merkezi İşlemci (CPU) değil aynı zamanda yerel birtakım olaylardan sorumlu yardımcı işlemciler de vardır. Bu yardımcı işlemcilere
-    genellikle "controller (denetleyici)" denilmektedir. Örneğin PC mimarisinde "Kesme Denetleyicisi (Intel 8250-PIC)", "Klavye Denetleyicisi (Intel 8042-KC)", 
-    "UART İşlemcisi (Intel 8250/NS 16550-UART)" gibi pek çok işlemci vardır. Bu işlemcilere komutlar tıpkı CPU/RAM haberleşmesinde olduğu gibi elektriksel düzeyde
-    CPU'nun adres ve data uçlarıyla yapılmaktadır. Yani CPU'nun adres ve data auçları yalnızca RAM'e değil yardımcı işlemcilere de bağlıdır. Pekiyi bu durumda CPU RAM'e erişirken
-    aynı zamanda yardımcı işlemcilere de erişmez mi? İşte CPU'ların genellikle IO/Mem biçiminde isimlendirilen bir uçları daha vardır. Bu ucun 5V ya da 0V olması erişimin RAM'e mi yoksa
-    yardımcı işlemciye mi yapılacağını belirtir. Yardımcı işlemcileri tasarlayanlar bu uca bakarak bilginin RAM'e değil kendilerine geldiğini anlayabilirler. Nomral RAM erişimlerine 
-    ilişkin MOV makine komutlarında bu IO/Mem ucu "mem" biçiminde aktive edilir. Ancak bazı IN, OUT gibi komutlarda bu uç "IO" biçiminde aktive edilmektedir. Bu durumda yardımcı işlemcilere
-    erişmek için MOV komutları değil özel IN, OUT komutları kullanılır. Ancak bazı yardımcı işlemciler bu IO/Mem ucu tam tersine "Mem" olarak aktive edildiğinde işlevini yapmaktadır. 
-    Bu durumda bu işlemcilere biz IN, OUT komutlarıyla değil RAM'e erişirmiş gibi MOV komutlarıyla erişiriz. İşte bu tekniğe "Memory Mapped IO" denilmektedir. Memory Mapped IO yardımcı
-    işlemcilere sanki RAM'miş gibi erişme anlamına gelir. 
-
-    Pekiyi yardımcı işlemcileri biribirnden ayıran şey nedir? İşte CPU'nun adres uçları bu yardımcı işlemciler tarafından özel bazı değerlerde ise dikkate alınmaktadır. Yani yardımcı işlemcilerin de
-    aynı RAM'deki byte'ların adresleri olduğu adresleri vardır. Bu adresler PC mimarisini tasarlayanlar tarafından önceden belirlenirler. Modern sistemlerde programlama yoluyla değiştirilebilen
-    adresler de söz konusudur. Yardımcı işlemcilerin adreslerine genel olarak "port numaraları" denilmektedir. O halde bizim bir yardımcı işlemciyi programlayabilmemiz için şu bilgileri 
-    biliyor olmamız gerekir:
-
-    1) Yardımcı işlemci normal IO mu yoksa Memory Mapped IO mu kullanmaktadır?
-    2) Yardımcı işlemcinin port numaraları (ya da memory mappe dio için adres numaraları) nedir?
-    3) Bu yardımcı işlemcinin hangi portunahangi değerler gönderildiğinde bu işlemci ne yapacaktır?
-    4) İşlemci bana bilgi verecekse hangi porttan vermektedir. Bilginin biçimi nedir?
+                                                159. Ders 02/08/2024 - Cuma
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
-    İşlemcilerin IN, OUT gibi makine komutları "özel (privileged)" komutlardır. Bunlar user mode'dan kullanılırsa işlemci koruma mekanizması gereği
-    bir içsel kesme oluşturur, işletim sistemi de bu kesme kodunda prosesi sonlandırır. Dolayısıyla bu komutları kullanarak donanım aygıtlarıyla konuşabilmek için
-    kernel mod aygıt sürücü yazmak gerekir. 
+    CPU ile RAM arasında veri transferi aslında tamamen elektriksel düzeyde 1'lerle 0'larla gerçekleşmektedir. CPU'nun adres 
+    uçları (address bus) RAM'in adres uçlarına bağlanır. Bu adres uçları RAM'den ransfer edilecek bilginin fiziksel adresiini 
+    belirtmek için kullanılmaktadır CPU'nun veri uçları (data bus) uçları ise bilginin alınıp gönderilmesinde kullanılmaktadır. 
+    İşlemin okuma mı yazma mı olduğu genellikle R/W biçiminde isimlendirilen ayrı bir control ucuyla yapılmaktadır. Örneğin 
+    32 bit Intel işlemcilerinde MOV EAX, [XXXXXXXX] komutu RAM'deki XXXXXXXX adresinden başlayan 4 byte bilginin CPU içerisindeki 
+    EAX yazmacına çekileceği anlamına gelmektedir. Bu makine komutu işletilirken CPU önce erişilecek adres olan XXXXXXXX adresini 
+    adres uçlarına elektriksel işaret olarak kodlar. RAM bu adresi alır, bu adresten başlayan 4 byte'lık bilgiyi veri uçlarına 
+    elektirksel olarak kodlar. CPU'da bu uçlardan bilgiyi yine elektirksel olarak alır ve EAX yazmacına yerleştirir. CPU'nun adres 
+    uçları RAM'in adres uçlarına, CPU'nun veri uçları ise RAM'in veri uçlarına bağlıdır. Tranfer yönü R/W ucuyla belirlenmektedir. 
+    Tabii CPU'lar bugün DRAM belleklerden daha hızlıdır. Dolayısıyla CPU RAM'den yanıt gelene kadar beklemektedir (wait state). 
+---------------------------------------------------------------------------------------------------------------------------*/
 
-    Aygıtlara erişmekte kullanılan komutlar CPU mimarisine göre değişebildiği için Linux çekirdeğinde bunlar için ortak arayüze sahip fonksiyonlar (makrolar) bulundurulmuştur. 
-    Bu fonksiyonlar (ya da makrolar) şunlardır:
+/*--------------------------------------------------------------------------------------------------------------------------
+    Bir bilisayar sisteminde yalnızca Merkezi İşlemci (CPU) değil aynı zamanda yerel birtakım olaylardan sorumlu yardımcı 
+    işlemciler de vardır. Bu yardımcı işlemcilere genellikle "controller (denetleyici)" denilmektedir. Örneğin klasik PC 
+    mimarisinde "Kesme Denetleyicisi (Intel 8250-PIC)", "Klavye Denetleyicisi (Intel 8042-KC)", "UART denetleyicisi (Intel 
+    8250/NS 16550-UART)" gibi pek çok işlemci vardır. Bu işlemcilere komutlar tıpkı CPU/RAM haberleşmesinde olduğu gibi elektriksel 
+    düzeyde CPU'nun adres ve veri uçları yoluyla gönderilmekte ve bu işlemcilerden bilgiler yine tıpkı RAM'de olduğu gibi adres 
+    ve veri uçları yoluyla alınmaktadır. Yani CPU'nun adres ve veri uçları yalnızca RAM'e değil yardımcı işlemcilere de bağlıdır. 
+    Pekiyi bu durumda CPU RAM'e erişirken aynı zamanda yardımcı işlemcilere de erişmez mi? İşte CPU'ların genellikle IO/Mem 
+    biçiminde isimlendirilen bir uçları daha vardır. Bu ucun 5V ya da 0V olması erişimin RAM'e mi yoksa yardımcı işlemciye mi 
+    yapılacağını belirtir. Yardımcı işlemcileri tasarlayanlar bu uca bakarak bilginin RAM'e değil kendilerine geldiğini 
+    anlayabilirler. Nomral RAM erişimlerine ilişkin MOV ya da LOAD/STORE makine komutlarında bu IO/Mem ucu "mem" biçiminde 
+    aktive edilir. Ancak bazı IN, OUT gibi komutlarda bu uç "IO" biçiminde aktive edilmektedir. Bu durumda yardımcı işlemcilere
+    erişmek için MOV, LOAD/STORE komutları değil genellikle IN, OUT biçiminde isimlendirilen komutları kullanılmaktadır. Ancak 
+    bazı yardımcı işlemciler bu "IO/Mem" ucu tam tersine "Mem" olarak aktive edildiğinde de işlevini yapacak biçimde konfigüre
+    edilmiş olabilir. Bu durumda bu işlemcilere biz IN, OUT komutlarıyla değil RAM'e erişiyormuş gibi MOV, LOAD/STORE komutlarıyla 
+    erişiriz. İşte bu tekniğe "Memory Mapped IO" denilmektedir. Memory Mapped IO yardımcı işlemcilere sanki RAM'miş gibi erişme 
+    anlamına gelir. Bunun da sistem programcısı için önemli avantajları vardır. Sistem programcısı bu sayede göstericileri kullanarak 
+    bu işlemcilere erişebilmektedir. Normal "IO/Mem" ucu "IO" biçiminde aktive edilerek erişimlere "Port-Mapped IO" da denilmektedir.
+    Bazı mimarilerde her iki teknik de yoğun kullanılmaktadır. Ancak bazı mimarilerde "memory mapped io" tekniği daha yoğun 
+    kullanılabilmektedir. Memory mapped IO tekniği kullanılırken artık RAM'in ilgili adresteki kısmına erişilemez ya da bu erişimin
+    bir anlamı kalmaz. Yani adeta bu teknikte sanki RAM'in bir bölümü çıkartılmış onun yerine ilgili işlemci oraya takılmış gibi 
+    bir etki oluşmaktadır. Örneğin memory mapped IO bilgisayar sistemlerinde grafik kartları tarafından yoğun olarak kullanılmaktadır. 
+    Grafik kartlarını tasarlayanlar kartın üzerindeki RAM'i,n (bu ana RAM değil) içeriğini belli periyotlarla ekrana göndermektedir. 
+    Programcı da C'de göstericileri kullanarak belli adrese yazma yapma yoluyla ekrana belirli şeylerin çıkmasını sağlayabilmektedir. 
 
+    Pekiyi yardımcı işlemcileri biribirnden ayıran şey nedir? İşte CPU'nun adres uçları bu yardımcı işlemciler tarafından özel 
+    bazı değerlerde ise dikkate alınmaktadır. Yani nasıl RAM'deki byte'ların adresleri varsa yardımcı işlemcilerin de birer 
+    donanımsal adresleri vardır. Bu adreslere genellikle "port numaraları" da denilmektedir. Yardımcı işlemcilerin port numaraları
+    donanım mimarisini tasarlayanlar tarafından donanımsal olarak önceden belirlenmiştir. Ancak modern sistemlerde programlama 
+    yoluyla değiştirilebilen port adresleri de söz konusu olmaktadır. PC mimarisinde programlanabilen port numarasına sahip 
+    olan işlemcilere "plug and play (PnP)" işlemciler de denilmektedir. 
+    
+    O halde bizim bir yardımcı işlemciyi programlayabilmemiz için şu bilgileri edinmiş olmamız gerekmektedir:
+
+    1) Yardımcı işlemci "port mapped IO" mu yoksa "memory mapped IO" mu kullanmaktadır?
+    2) Yardımcı işlemcinin port numaraları (ya da memory mapped io söz konusu ise belek adresleri) nedir?
+    3) Bu yardımcı işlemcinin hangi portuna (memory mapped io söz konusu ise hangi adrese) hangi değerler gönderildiğinde 
+    bu işlemci ne yapacaktır?
+    4) İşlemci bize bilgi verecekse hangi bunu portu okuyarak (memory mapped IO söz konusu ise hangi adresi okuyarak) vermektedir. 
+    Verilen bilginin biçimi nedir?
+
+    Yardımcı işlemciler yalnızca bilgisayar donanımın içerisinde donanımsal olarak çivilenmiş bir biçimde bulunmayabilirler. 
+    Bazı bilgisayar sistemlerinde (örneğin masasüstü PC'lerde) genişleme yuvaları vardır. Bu genişleme yuvaları CPU'nun adres 
+    ve veri yoluna erişebilmektedir. Bu genişleme yuvaları için kart tasarlayan tasarımcılar kartlarının üzerinde yardımcı
+    işlemcileri bulundurabilirler. Böylece ilgili kart takıldığında sanki sisteme yeni bir yardımcı işlemci takılmış gibi 
+    etki oluşmaktadır. 
+
+    CPU'ya neden "merkezi (central)" işlemci denildiğini artık anlayabilirsiniz. Bilgisayar sistemlerinde kendi yerel işlemlerinden
+    sorumlu pek çok yardımcı işlemci olabilir. Ancak bunların hepsini elektriksel olarak CPU programlamaktadır. Bu nedenle CPU'ya
+    merkezi işlemci denilmiştir. Tabii CPU aslında bizim yazdığımız programları çalıştırır. Yani yardımcı işlemcileri de sonuç 
+    olarak biz programlamış oluruz. 
+
+    Pekiyi yardımcı işlemcileri programlarken onlara tek hamlede kaç byte bilgi gönderip onlardan kaç byte bilgi okuyabiliriz?
+    İşte bazı işlemciler (özellikle eskiden tasarlanmış olanlar) byte düzeyinde programlanmaktadır. Bazıları ise WORD düzeyinde 
+    bazıları ise DWORD düzeyinde programlanabilmektedir. O halde bizim bir haberleşme portuna 1 byte, 2 byte, 4 byte gönderip
+    alabilmemiz gerekir.
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Pekiyi bir yardımcı işlemci kernel modda programlanabiliyorsa user mode programlar bu yardımcı işlemciyi nasıl kullanmaktadır?
+    İşte tipik olarak user mode programlar ioctl işlemleriyle aygıt sürücünün kodlarını çalıştırırlar. Aygıt sürücüler de 
+    bu kodlarda ilgili yarmcı işlemciye komutlar yollayabilir. Bazen read/write işlemleri de bu amaçla kullanılabilmektedir.
+    Tabii karmaşık yardımcı işlemciler için aygıt sürücüleri yazanlar faydalaı işlemlerin daha kolay yapılabilmesi için 
+    daha yüksek seviyeli fonksiyonları bir API kütüphanesi yoluyla sağlayabilmektedir. 
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    İşlemcilerin IN, OUT gibi makine komutları "özel (privileged)" komutlardır. Bunlar user mode'dan kullanılırsa işlemci 
+    koruma mekanizması gereği bir içsel kesme oluşturur, işletim sistemi de bu kesme kodunda prosesi sonlandırır. Dolayısıyla 
+    bu komutları kullanarak donanım aygıtlarıyla konuşabilmek için kernel mod aygıt sürücü yazmak gerekir. 
+
+    Aygıtlara erişmekte kullanılan komutlar CPU mimarisine göre değişebildiğnden Linux çekirdeğinde bunlar için ortak arayüze 
+    sahip inline fonksiyonlar bulundurulmuştur. Bu fonksiyonlar şunlardır:
+
+    #include <asm/io.h>
+    
     unsigned char inb(int addr);
     unsigned short inw(int addr);
     unsigned int inl(int addr);
@@ -63928,12 +64039,15 @@ module_exit(generic_exit);
     void outw(unsigned short b, int addr);
     void outl(unsigned int b, int addr);
 
-    inb yardımcı işlemciden 1 byte, inw 2 byte, inl 4 byte okumak için kullanılmaktadır. Benzer biçimde yardımcı işlemcilere outb 1 byte, outw 2 byte ve outl 4 byte göndermek
-    için kullanılır. 
+    inb portlarından 1 byte, inw 2 byte, inl 4 byte okumak için kullanılmaktadır. Benzer biçimde haaberleşme portlarına outb 1 
+    byte, outw 2 byte ve outl 4 byte göndermek için kullanılmaktadır.
 
-    Bazı mimarilerde bir bellek adresinden başlayarak belli bir sayıda byte'ı belli bir porta gönderen ve belli bir prottan yapılan okumaları belli bir adresten itibaren belleğe 
-    yerleştiren özel makine makumtları vardır. Bu komutlara string komutları denilmektedir. (Intel'de string komutları yalnızca IO ile ilgili değildir.) İşte bu komutlara sahip
-    mimarilerde bu string komutlarıyla IN, OUT yapan kernel fonksiyonları da bulundurulmıştur:
+    Bazı mimarilerde bir bellek adresinden başlayarak belli bir sayıda byte'ı belli bir porta gönderen ve belli bir prottan 
+    yapılan okumaları belli bir adresten itibaren belleğe yerleştiren özel makine makumtları vardır. Bu komutlara string komutları 
+    denilmektedir. (Intel'de string komutları yalnızca IO işlemleri ile ilgili değildir.) İşte bu komutlara sahip mimarilerde bu 
+    string komutlarıyla IN, OUT yapan çekirdek fonksiyonları da bulundurulmıştur:
+
+    #include <asm/io.h>
 
     void insb(unsigned long addr, void *buffer, unsigned int count);
     void insw(unsigned long addr, void *buffer, unsigned int count);
@@ -63943,28 +64057,18 @@ module_exit(generic_exit);
     void outsw(unsigned long addr, const void *buffer, unsigned int count);
     void outsl(unsigned long addr, const void *buffer, unsigned int count);
 
-    insb, insw ve insl sırasıyla 1 byte 2 byte ve 4 byte'lık sitring fonksiyonlarıdır. Bu fonksiyonlar birinci parametresiyle belirtilen port numarasından 1, 2 ya da 4 byte'lık bilgileri
-    ikinci parametresinde belirtilen adresten itibaren belleğe yerleştirir. Bu işlemi de count kere tekrar eder. Yani bu fonksiyonlar porttan count defa okuma yapıp okunanları buffer
-    ile belirtilen adresten itibaren belleğe yerleştirmektedir. outsb, outsw ve outsl fonksiyonları bu işlemin tam tersini yapmaktadır. Yani bellekte bir adresten başlayarak count tane byte'ı
-    birinci parametresiyle belirtilen port'a yerleştirmektedir. 
+    insb, insw ve insl sırasıyla 1 byte 2 byte ve 4 byte'lık sitring fonksiyonlarıdır. Bu fonksiyonlar birinci parametresiyle 
+    belirtilen port numarasından 1, 2 ya da 4 byte'lık bilgileri ikinci parametresinde belirtilen adresten itibaren belleğe 
+    yerleştirirler. Bu işlemi de count kere tekrar ederler. Yani bu fonksiyonlar porttan count defa okuma yapıp okunanları buffer
+    ile belirtilen adresten itibaren belleğe yerleştirmektedir. outsb, outsw ve outsl fonksiyonları ise bu işlemin tam tersini 
+    yapmaktadır. Yani bellekte bir adresten başlayarak count tane byte'ı birinci parametresiyle belirtilen port'a yerleştirmektedir. 
 
-    Bir haberleşme portu ile çalışmadan önce o portun boşta olup olmadığını belirlemek gerekebilir. Çünkü başka aygıtların kullandığı port'lara erişmek sorunlara yol açabilmektedir. 
-    Tabii eğer biz emin isek başkasının kullandığı port'u kullanabiliriz. Yani böylesi bir durum çekirdek tarafından kontrol edilmemektedir. İşte kullanmadan önce bir portun sorgulanması 
-    için request_region isimli kernek fonksiyonu kullanılmaktadır.
+    Bazı sistemlerde aygıtlar yavaş kalabilmektedir. Yani bus çok hızlı aygıt yavaş ise o aygıt port'larına peşi sıra bilgiler 
+    gönderilip alınırken sorunlar oluşabilmektedir. Bunun için bilgiyi porta gönderdikten ya da bilgiyi port'tan aldıktan sonra 
+    kısa bir süre bekleme yapmak gerekebilir. İşte bu nedenle yukarıdaki fonksiyonların bekleme yapan p'li (pause) versiyonları 
+    da bulundurulmuştur. 
 
-    struct resource *request_region(unsigned long first, unsigned long n, const char *name);
-
-    Fonksiyonun birinci parametresi kullanılmak istenen port numarasının başlangıç adresini, ikinci parametresi sayısını, üçüncü parametresi ise /proc/ioports dosyasına görüntülenecek
-    ismi belirtir. Fonksiyon başarı durumunda portları betimleyen resource isimli yapının başlangıç adresine başarısızlık durumunda NULL adrese geri dönmektedir. request_region
-    fonksiyonu ile tahsis edilen port release_region foksiyonu ile serbest bırakılmalıdır:
-
-    void release_region(unsigned long start, unsigned long n);
-
-    Yukarıda da belirttiğimiz gibi portların kullanılması için bu biçimde tahsisat yapma zorunluluğu yoktur. Ancak programcı programlanabilir IO portları için başkalarının kullanmadığı port
-    numaralarından emin olmak için bu yöntemi izleemelidir. 
-
-    Bazı sistemlerde aygıtlar yavaş kalabilmektedir. Yani bus çok hızlı aygıt yavaş ise o aygıt port'larına peşi sıra bilgiler gönderilip alınırken sorunlar oluşabilmektedir. 
-    Bunun için bilgiyi porta gönderdikten ya da bilgiyi port'tan aldıktan sonra kısa bir süre bekleme yapmak gerekebilir. İşte bu nedenle yukarıdaki fonksiyonların bekleme yapan p'li (pause) versiyonları da bulundurulmuştur. 
+    #include <asm/io.h>
 
     unsigned char inb_p(int addr);
     unsigned short inw_p(int addr);
@@ -63973,62 +64077,134 @@ module_exit(generic_exit);
     void outb_p(unsigned char b, int addr);
     void outw_p(unsigned short b, int addr);
     void outl_p(unsigned int b, int addr);
-
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
-    8042 Klavye denetleyicisinin 60H ve 64H numaralı iki port'u vardır. 60H portu hem okunabilir hem de yazılabilir durumdadır. 60H portu 1 byte olarak okunduğunda 
-    son basılan ya da çekilen tuşun klavye scan kodu elde edilmektedir. Klavye terminolojisinde tuşa basılırken oluşturulan scan koduna "make code", parmak tuştan
-    çekildiğinde oluşturulan koda ise "break code" denilmektedir. Elde edilen 1 byte kodun 7 biti scan kodunu son biti ise kodun make kod mu yoksa break kod mu olduğunu belirtmektedir. 
+    Linux'ta user moddan haberleşme portlarına IN ve OUT yapmak için basit bir aygıt sürücüsü de bulundurulmuştur. Bu aygıt 
+    sürücüsüne "/dev/port" aygıt dosyasıyla erişilebilir. Tabii user mod programların bu biçimde her defasında kernel moda
+    geçerek In/OUT yapması verimsiz bir yöntemdir. Ancak yine de basit uygulamalar için faydalı kullanımlar söz konusu 
+    olabilmektedir. Bu aygıt sürücü dosya gibi açıkdıktan sonra sanki her dosya offset'i bir haberleşme portuymuş gibi işlem 
+    görmektedir. Yine okuma yazma sırasında dosya göstericisi ilerletilmekte dolayısıyla başka porta konumlandırılmaktadır.
 
-    Klavye denetleyicisi kablo ya da USB yoluyla klavye içerisindeki işlemciye bağlıdır. Aslında klavyenin ışıklarının yakılması gibi, typematic hızının ayarlanması gibi işlemler
-    klavyenin içerisindeki işlemci tarafından yapılmaktadır. Ancak klavyenin içerisindeki işlemci klavye denetleyicisinden uygun komutlar geldiğinde bunları yapar. Yani aslında örneğin
-    Caps Lock tuşuna basıldığında bu tuşun ışığı o anda yakılmamaktadır. Bu tuşun make kodu klavye denetleyicisine iletilir. Klavye denetleyicisi IRQ1 kesmesini oluşturur. İşletim sistemi
-    bu kesme kodu içerisinde basılan tuşun Caps Lock olduğunu anlar 60H portuna komut gönderir. Klavye denetleyicisi de bu komutu klavye içerisindeki işlemciye iletir. Işığı klavye içerisindeki
-    işlemci yakar. 
+    Aşağıdaki örnekte 0x60 numaralı porttan "/dev/port" aygıt sürücüsü yoluyla 1 byte okunmaktadır.
+---------------------------------------------------------------------------------------------------------------------------*/
 
-    Klavye denetleyicisinin 60H portuna gönderilen 1 byte değere "keyboard encoder command" denilmektedir. Bu 1 byte'lık komut klavye denetleyicisi tarafından klavye içerisinde işlemciye gönderilir. 
-    Ancak bu 1 byte'tan sonra bazı komutlar parametre almaktadır. Parametre de yine 60H portuna komut sonra 1 byte yollanarak gönderilmeketdir. 
+/* app.c*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+void exit_sys(const char *msg);
+
+int main(void)
+{
+    int fd;
+    int result;
+    unsigned char ch;
+
+    if ((fd = open("/dev/port", O_RDWR)) == -1)
+        exit_sys("open");
+
+    if (lseek(fd, 0x60, SEEK_SET) == -1)
+        exit_sys("lseek");
+
+    if ((result = read(fd, &ch, 1)) == -1)
+        exit_sys("read");
+    
+    printf("%02X\n", ch);
+
+    close(fd);
+
+    return 0;
+}
+
+
+void exit_sys(const char *msg)
+{
+    perror(msg);
+
+    exit(EXIT_FAILURE);
+}
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Bir haberleşme portu ile çalışmadan önce o portun boşta olup olmadığını belirlemek gerekebilir. Çünkü başka aygıtların 
+    kullandığı port'lara erişmek sorunlara yol açabilmektedir. Tabii eğer biz ilgili port'un kullanılmasının bir soruna yol 
+    açmayacağından emin isek başkalarının kullandığı  kullandığı port'ları doğrudan kullanabiliriz. Çekirdek bu bakımdan 
+    bir kontrol yapmamaktadır. Kullanmadan önce bir portun başkaları tarafından kullanılıp kullanılmadığının sorgulanması 
+    için request_region isimli çekirdek fonksiyonu kullanılmaktadır.
+    Fonksiyonun prototipi şöyledir:
+
+    #include <linux/ioport.h>
+
+    struct resource *request_region(unsigned long first, unsigned long n, const char *name);
+
+    Fonksiyonun birinci parametresi kullanılmak istenen port numarasının başlangıç numarasını, ikinci parametresi ilgili port 
+    numarasından itibaren ardışıl kaç port numarasının kullanılacağını, üçüncü parametresi ise "/proc/ioports" dosyasında 
+    görüntülenecek ismi belirtmektedir. Fonksiyon başarı durumunda portları betimleyen resource isimli yapının başlangıç 
+    adresine başarısızlık durumunda NULL adrese geri dönmektedir. request_region fonksiyonu ile tahsis edilen port umaraları 
+    release_region foksiyonu ile serbest bırakılmalıdır:
+
+    #include <linux/ioport.h>
+
+    void release_region(unsigned long start, unsigned long n);
+
+    Yukarıda da belirttiğimiz gibi portların kullanılması için bu biçimde tahsisat yapma zorunluluğu yoktur. Ancak programcı 
+    programlanabilir IO portları söz konusu olduğunda ilgili port numaralarını başkalarının kullanmadığından emin olmak için 
+    bu yöntemi izlemelidir. 
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
-    Kesme kodlarının en çok yaptığı şey bir yerden bilgiyi alıp (örneğin network kartından, seri porttan, klavye denetleyicisinden) onu bir yere yerleştirip, 
-    uyuyan thread'leri uyandırmaktır. Aşağıdaki örnekte aygıt sürücüye bir IOCTL komutu veridliğinde thread'i uyutan, klavyeden bir tuşa basıldığında kesme kodu yoluyla
-    uyuyan prosesleri uyandıran bir örnek verilmiştir. Basılan tuşun scan kodu ioctl fonksiyonunun geri dönüş değeri biçiminde user mod programa iletilmektedir. 
+    PC'lerdeki klavye denetleyicisinin (klavye içerisindeki değil PC tarafındaki denetleyicinin (orijinali Intel 8042)) 
+    60H ve 64H numaralı iki port'u vardır. 60H portu hem okunabilir hem de yazılabilir durumdadır. 60H portu 1 byte olarak 
+    okunduğunda son basılan ya da çekilen tuşun klavye scan kodu elde edilmektedir. Yukarıda dabelirttiğimiz gibi klavye 
+    terminolojisinde uşa basılırken oluşturulan scan koduna "make code", parmak tuştan çekildiğinde oluşturulan scan koduna 
+    ise "break code" denilmektedir. Klavye içerisindeki işlemcinin (keyboard encoder)  break code olarak önce bir F0 byte sonra 
+    da make code byte'ını gönderdiğini belirtmiştik. İşte PC içerisindeki klavye denetleyicisi bu break kodu aldığında bunu iki
+    byte olarak değil yüksek anlamlı biti 1 olan byte olarak saklamaktadır. Böylece biz 60H port'unu okuduğumuzda onun yüksek 
+    anlamlı bitine bakarak okuduğumuz scan kodunun make code mu yoksa break code mu olduğunu anlayabiliriz. 
+
+    Klavye denetleyicisinin 60H portuna gönderilen 1 byte değere "keyboard encoder command" denilmektedir. Bu 1 byte'lık komut 
+    klavye denetleyicisi tarafından klavye içerisindeki işlemciye gönderilir. Ancak bu 1 byte'tan sonra bazı komutlar parametre 
+    almaktadır. Parametreler de komutton sonra 1 byte olarak aynı port yoluyla iletilmektedir. 
+
+    Aşağıdaki örnekte klavyeden tuşlara basıldığında basılan ve çekilen tuşların make ve break code'ları yazdırılmaktadır.
 ---------------------------------------------------------------------------------------------------------------------------*/
 
-/* keyboard-driver.c */
+/* irq-driver.c */
 
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/fs.h>
 #include <linux/cdev.h>
 #include <linux/interrupt.h>
-
-#define KEYBOARD_MAGIC		'k'
-#define IOC_GETKEY			_IOR(KEYBOARD_MAGIC, 0, int)
+#include <asm/io.h>
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("General Character Device Driver");
 MODULE_AUTHOR("Kaan Aslan");
 
-static irqreturn_t keyboard_irq_handler(int irq, void *dev_id);
-static long keyboard_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
-
 static dev_t g_dev;
 static struct cdev *g_cdev;
 static struct file_operations g_file_ops = {
 	.owner = THIS_MODULE,
-	.unlocked_ioctl = keyboard_ioctl,
 };
-static DECLARE_WAIT_QUEUE_HEAD(g_wq);
-static int g_key;
+
+static irqreturn_t keyboard_irq_handler(int irq, void *dev_id);
+
+static unsigned char g_keymap[128] = {
+	[30] = 'A',
+	[31] = 'S',
+	[32] = 'D',
+	[33] = 'F',
+};
 
 static int __init generic_init(void)
 {
 	int result;
 
-	if ((result = alloc_chrdev_region(&g_dev, 0, 1, "keyboard-driver")) < 0) {
+	if ((result = alloc_chrdev_region(&g_dev, 0, 1, "irq-driver")) < 0) {
 		printk(KERN_INFO "Cannot alloc char driver!...\n");
 		return result;
 	}
@@ -64047,12 +64223,132 @@ static int __init generic_init(void)
 		return result;
 	}
 
-	if ((result = request_irq(1, keyboard_irq_handler, IRQF_SHARED, "keyboard-char-driver-irq", &g_cdev)) != 0) {
+	if ((result = request_irq(1, keyboard_irq_handler, IRQF_SHARED, "irq-driver", &g_cdev)) != 0) {
+        cdev_del(g_cdev);
+	    unregister_chrdev_region(g_dev, 1);
 		printk(KERN_ERR "interrupt couldn't registered!...\n");
 		return result;
 	}
 
-	printk(KERN_INFO "Module initialized with %d:%d device number...\n", MAJOR(g_dev), MINOR(g_dev));
+    printk(KERN_INFO "irq-driver init...\n");
+
+	return 0;
+}
+
+static irqreturn_t keyboard_irq_handler(int irq, void *dev_id)
+{
+	unsigned char code;
+	char *code_type;
+
+	code = inb(0x60);
+	
+	code_type = code & 0x80 ? "Break code: " : "Make code: ";
+
+	if (g_keymap[code & 0x7F])
+		printk(KERN_INFO "%s %c (%02X)\n", code_type, g_keymap[code & 0x7F], code);
+	else
+		printk(KERN_INFO "%s %02X\n", code_type, code);
+
+	return IRQ_HANDLED;
+}
+
+static void __exit generic_exit(void)
+{
+	free_irq(1, &g_cdev);
+	cdev_del(g_cdev);
+	unregister_chrdev_region(g_dev, 1);
+
+    printk(KERN_INFO "irq-driver exit...\n");
+}
+
+module_init(generic_init);
+module_exit(generic_exit);
+
+/*--------------------------------------------------------------------------------------------------------------------------
+                                            161. Ders 09/08/2024 - Cuma
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Kesme kodları bazen bilgiyi bir kaynaktan alıp (örneğin network kartından, seri porttan, klavye denetleyicisinden) onu bir 
+    yere (genellikle bir kuyruk sistemi) yerleştirip, uyuyan thread'leri uyandırmaktır. Örneğin bir thread'in klavyeden bir 
+    tuşa basılana kadar bekleyeceğini düşünelim. Bu durumda thread işletim sistemi tarafından bir bekleme kuyruğuna alınır. 
+    Klavyeden bir tuşa basıldığında oluşan IRQ içerisinde bu bekleme kuyruğunda bekleyen thread'ler uyandırılır. 
+    
+    Aşağıda örnekte aygıt sürücüye aygıt sürücünün bir IOCTL komutunda thread bloke edilmiştir. Sonra klavyeden bir tuşa 
+    basıldığında thread uykudan uyandırılıp basılmış olan tuşuna scan kodu IOCTL kodu tarafından thread'e verilmiştir. 
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/* irq-driver.h */
+
+#ifndef IRQDRIVER_H_
+#define IRQDRIVER_H_
+
+#include <linux/ioctl.h>
+
+#define KEYBOARD_MAGIC		'k'
+#define IOC_GETKEY			_IOR(KEYBOARD_MAGIC, 0, int)
+
+#endif
+
+/* irq-driver.c */
+
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/fs.h>
+#include <linux/cdev.h>
+#include <linux/uaccess.h>
+#include <linux/interrupt.h>
+#include <asm/io.h>
+#include "irq-driver.h"
+
+MODULE_LICENSE("GPL");
+MODULE_DESCRIPTION("General Character Device Driver");
+MODULE_AUTHOR("Kaan Aslan");
+
+static irqreturn_t keyboard_irq_handler(int irq, void *dev_id);
+static long keyboard_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
+
+static dev_t g_dev;
+static struct cdev *g_cdev;
+static struct file_operations g_file_ops = {
+	.owner = THIS_MODULE,
+    .unlocked_ioctl = keyboard_ioctl,
+};
+
+static DECLARE_WAIT_QUEUE_HEAD(g_wq);
+static int g_key;
+
+static int __init generic_init(void)
+{
+	int result;
+
+	if ((result = alloc_chrdev_region(&g_dev, 0, 1, "irq-driver")) < 0) {
+		printk(KERN_INFO "Cannot alloc char driver!...\n");
+		return result;
+	}
+
+	if ((g_cdev = cdev_alloc()) == NULL) {
+		printk(KERN_INFO "Cannot allocate cdev!...\n");
+		return -ENOMEM;
+	}
+
+	g_cdev->owner = THIS_MODULE;
+	g_cdev->ops = &g_file_ops;
+
+	if ((result = cdev_add(g_cdev, g_dev, 1)) != 0) {
+		unregister_chrdev_region(g_dev, 1);
+		printk(KERN_INFO "Cannot add character device driver!...\n");
+		return result;
+	}
+
+	if ((result = request_irq(1, keyboard_irq_handler, IRQF_SHARED, "irq-driver", &g_cdev)) != 0) {
+        cdev_del(g_cdev);
+	    unregister_chrdev_region(g_dev, 1);
+		printk(KERN_ERR "interrupt couldn't registered!...\n");
+		return result;
+	}
+
+    printk(KERN_INFO "irq-driver init...\n");
 
 	return 0;
 }
@@ -64076,11 +64372,14 @@ static irqreturn_t keyboard_irq_handler(int irq, void *dev_id)
 
 static long keyboard_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-	switch (cmd) {
+    switch (cmd) {
 		case IOC_GETKEY:
 			g_key = 0;
 			if (wait_event_interruptible(g_wq, g_key != 0))
 				return -ERESTARTSYS;
+
+            if (copy_to_user((void *)arg, &g_key, sizeof(int)) != 0)
+                return -EFAULT;
 
 			return g_key;
 		default:
@@ -64088,16 +64387,19 @@ static long keyboard_ioctl(struct file *filp, unsigned int cmd, unsigned long ar
 	}
 }
 
-static void __exit generic_exit(void)
+ static void __exit generic_exit(void)
 {
 	free_irq(1, &g_cdev);
 	cdev_del(g_cdev);
 	unregister_chrdev_region(g_dev, 1);
-	printk(KERN_INFO "Goodbye...\n");
+
+    printk(KERN_INFO "irq-driver exit...\n");
 }
 
 module_init(generic_init);
 module_exit(generic_exit);
+
+# Makefile
 
 obj-m += $(file).o
 
@@ -64106,53 +64408,7 @@ all:
 clean:
 	make -C /lib/modules/$(shell uname -r)/build M=${PWD} clean
 
-/* keyboard-ioctl.h */
-
-#ifndef KEYBOARD_IOCTL_H_
-#define KEYBOARD_IOCTL_H_
-
-#define KEYBOARD_MAGIC		'k'
-#define IOC_GETKEY			_IOR(KEYBOARD_MAGIC, 0, int)
-
-#endif
-
-/* sample.c */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include "keyboard-ioctl.h"
-
-void exit_sys(const char *msg);
-
-int main(void)
-{
-	int fd;
-	ssize_t n;
-	int scode;
-
-	if ((fd = open("keyboard-driver", O_RDONLY)) == -1)
-		exit_sys("open");
-
-	printf("press any key to continue...\n");
-	if ((scode = ioctl(fd, IOC_GETKEY)) < 0)
-		exit_sys("ioctl");
-
-	printf("Scan code: %d\n", scode);
-
-	close(fd);
-
-	return 0;
-}
-
-void exit_sys(const char *msg)
-{
-	perror(msg);
-
-	exit(EXIT_FAILURE);
-}
+/* load (bu satırı dosyaya kopyalamayınız) */
 
 #!/bin/bash
 
@@ -64162,28 +64418,96 @@ mode=666
 /sbin/insmod ./$module.ko ${@:2} || exit 1
 major=$(awk "\$2 == \"$module\" {print \$1}" /proc/devices)
 rm -f $module
-mknod $module c $major 0
-chmod $mode $module
+mknod -m $mode $module c $major 0
+
+/* unload (bu satırı dosyaya kopyalamayınız) */
+
+#!/bin/bash
+
+module=$1
+mode=666
+
+/sbin/rmmod ./$module.ko || exit 1
+rm -f $module
+
+/* app.c */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include "irq-driver.h"
+
+void exit_sys(const char *msg);
+
+int main(void)
+{
+    int fd;
+    int key;
+
+    if ((fd = open("irq-driver", O_RDONLY)) == -1)
+        exit_sys("open");
+
+    if (ioctl(fd, IOC_GETKEY, &key) == -1)
+        exit_sys("ioctl");
+
+    printf("Scan code: %d (%02x)\n", key, key);
+
+    close(fd);
+}
+ 
+void exit_sys(const char *msg)
+{
+	perror(msg);
+
+	exit(EXIT_FAILURE);
+}
 
 /*--------------------------------------------------------------------------------------------------------------------------
-    Aşağıdaki örnekte IOC_SETLIGHTS ioctl komutu ile 8042 klavye denetleyicine komut gönderme yoluyla klavye ışıkları yakılıp söndürülmektedir. 
-    Klavyede üç ışıklı tuş vardır: Caps-Lock, Num-Lock ve Scroll_Lock. Bu ışıkları yakıp söndürebilmek için önce 60h portuna 0xED komutu gönderilir. 
-    Sonra yine 60h portuna ışıkların durumunu belirten 1 byte gönderilir. Bu byte'ın düşükj anlamlı 3 biti sırasıyla Scroll-Lock, Num-Lock ve Caps-LOck
-    tuşlarının ışıklarını belirtmektedir. 60h portuna kout göndermeden önce 64h portundan elde edilen değerin 2 numaralı bitinin 0 olması gerekmektedir. 
-    Ayrıntılı bilgi için http://www.brokenthorn.com/Resources/OSDev19.html sayfasını inceleyebilirsiniz.
+    Aşağıdaki örnekte IOC_SETLIGHTS ioctl komutu ile 8042 klavye denetleyicine komut gönderme yoluyla klavye ışıkları yakılıp 
+    söndürülmektedir. Klavyede üç ışıklı tuş vardır: Caps-Lock, Num-Lock ve Scroll_Lock. Bu ışıkları yakıp söndürebilmek için 
+    önce 60h portuna 0xED komutu gönderilir. Sonra yine 60h portuna ışıkların durumunu belirten 1 byte gönderilir. Bu byte'ın 
+    düşük anlamlı 3 biti sırasıyla Scroll-Lock, Num-Lock ve Caps-Lock tuşlarının ışıklarını belirtmektedir:
+    
+    7 6 5 4 3 CL NL SL
+    x x x x x x  x  x 
+    
+    60h portuna komut göndermeden önce 64h portundan elde edilen değerin 2 numaralı bitinin 0 olması gerekmektedir. Ayrıntılı 
+    bilgi için http://www.brokenthorn.com/Resources/OSDev19.html sayfasını inceleyebilirsiniz.
+
+    Aşağıdaki aygıt sürücüde IOC_SETLIGHTS IOCTK komutunda klavye ışıklarının yakılıp söndürülmesi sağlanmıştır. Burada
+    "app.c" isimli user mode program bir komut satırı argümanı almış ve o komut satırı argümanınındaki sayıyı yukarıda 
+    alattığımız gibi klavye denetleyicisine göndermiştir. Artık pek çok klavyede Scroll Lock ve Num Lock tuşlarının ışıkları
+    bulunmamaktadır. Programın Caps Lock ışığını yakmasını istiyorsanız 4 argümanıyla (CL bitinin 2  numaralı bit olduğuna 
+    dikkat ediniz) söndürmek istiyorsanız 0 argümanıyla çalıştırabilirsiniz. Örneğin:
+
+    $ ./app 4
+    $ ./app 0
 ---------------------------------------------------------------------------------------------------------------------------*/
 
-/* keyboard-driver.c */
+/* irq-driver.h */
+
+#ifndef IRQDRIVER_H_
+#define IRQDRIVER_H_
+
+#include <linux/ioctl.h>
+
+#define KEYBOARD_MAGIC		'k'
+#define IOC_GETKEY			_IOR(KEYBOARD_MAGIC, 0, int)
+
+#endif
+
+/* irq-driver.c */
 
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/fs.h>
 #include <linux/cdev.h>
+#include <linux/uaccess.h>
 #include <linux/interrupt.h>
-
-#define KEYBOARD_MAGIC		'k'
-#define IOC_GETKEY			_IOR(KEYBOARD_MAGIC, 0, int)
-#define IOC_SETLIGHTS		_IOR(KEYBOARD_MAGIC, 1, int)
+#include <asm/io.h>
+#include "irq-driver.h"
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("General Character Device Driver");
@@ -64191,14 +64515,23 @@ MODULE_AUTHOR("Kaan Aslan");
 
 static irqreturn_t keyboard_irq_handler(int irq, void *dev_id);
 static long keyboard_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
-static void keyboard_lights(long arg);
 
 static dev_t g_dev;
 static struct cdev *g_cdev;
 static struct file_operations g_file_ops = {
 	.owner = THIS_MODULE,
-	.unlocked_ioctl = keyboard_ioctl,
+    .unlocked_ioctl = keyboard_ioctl,
 };
+#ifndef IRQDRIVER_H_
+#define IRQDRIVER_H_
+
+#include <linux/ioctl.h>
+
+#define KEYBOARD_MAGIC		'k'
+#define IOC_GETKEY			_IOR(KEYBOARD_MAGIC, 0, int)
+
+#endif
+
 static DECLARE_WAIT_QUEUE_HEAD(g_wq);
 static int g_key;
 
@@ -64206,7 +64539,7 @@ static int __init generic_init(void)
 {
 	int result;
 
-	if ((result = alloc_chrdev_region(&g_dev, 0, 1, "keyboard-driver")) < 0) {
+	if ((result = alloc_chrdev_region(&g_dev, 0, 1, "irq-driver")) < 0) {
 		printk(KERN_INFO "Cannot alloc char driver!...\n");
 		return result;
 	}
@@ -64225,12 +64558,14 @@ static int __init generic_init(void)
 		return result;
 	}
 
-	if ((result = request_irq(1, keyboard_irq_handler, IRQF_SHARED, "generic-char-driver-irq", &g_cdev)) != 0) {
+	if ((result = request_irq(1, keyboard_irq_handler, IRQF_SHARED, "irq-driver", &g_cdev)) != 0) {
+        cdev_del(g_cdev);
+	    unregister_chrdev_region(g_dev, 1);
 		printk(KERN_ERR "interrupt couldn't registered!...\n");
 		return result;
 	}
 
-	printk(KERN_INFO "Module initialized with %d:%d device number...\n", MAJOR(g_dev), MINOR(g_dev));
+    printk(KERN_INFO "irq-driver init...\n");
 
 	return 0;
 }
@@ -64254,46 +64589,44 @@ static irqreturn_t keyboard_irq_handler(int irq, void *dev_id)
 
 static long keyboard_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-	switch (cmd) {
+    switch (cmd) {
 		case IOC_GETKEY:
 			g_key = 0;
 			if (wait_event_interruptible(g_wq, g_key != 0))
 				return -ERESTARTSYS;
 
-			return g_key;
-		case IOC_SETLIGHTS:
-			keyboard_lights(arg);
-			break;
+            if (copy_to_user((void *)arg, &g_key, sizeof(int)) != 0)
+                return -EFAULT;
 
+			return g_key;
+
+        case IOC_SETLIGHTS:
+            while ((inb(0x64) & 2) != 0)
+                ;
+            outb(0xED, 0x60);
+            while ((inb(0x64) & 2) != 0)
+                ;
+            outb(arg, 0x60);
+            break;
 		default:
 			return -ENOTTY;
 	}
-	return 0;
+    return 0;
 }
 
-static void send_keyboard_encoder(uint8_t cmd)
-{
-	while ((inb(0x64) & 2) != 0)
-		;
-	outb(cmd, 0x60);
-}
-
-static void keyboard_lights(long arg)
-{
-	send_keyboard_encoder(0xED);
-	send_keyboard_encoder((uint8_t) arg);
-}
-
-static void __exit generic_exit(void)
+ static void __exit generic_exit(void)
 {
 	free_irq(1, &g_cdev);
 	cdev_del(g_cdev);
 	unregister_chrdev_region(g_dev, 1);
-	printk(KERN_INFO "Goodbye...\n");
+
+    printk(KERN_INFO "irq-driver exit...\n");
 }
 
 module_init(generic_init);
 module_exit(generic_exit);
+
+# Makefile
 
 obj-m += $(file).o
 
@@ -64302,50 +64635,7 @@ all:
 clean:
 	make -C /lib/modules/$(shell uname -r)/build M=${PWD} clean
 
-/* keyboard-ioctl.h */
-
-#ifndef KEYBOARD_IOCTL_H_
-#define KEYBOARD_IOCTL_H_
-
-#define KEYBOARD_MAGIC		'k'
-#define IOC_GETKEY			_IOR(KEYBOARD_MAGIC, 0, int)
-#define IOC_SETLIGHTS		_IOR(KEYBOARD_MAGIC, 1, int)
-
-#endif
-
-/* sample.c */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include "keyboard-ioctl.h"
-
-void exit_sys(const char *msg);
-
-int main(void)
-{
-	int fd;
-	ssize_t n;
-
-	if ((fd = open("keyboard-driver", O_RDONLY)) == -1)
-		exit_sys("open");
-
-	if (ioctl(fd, IOC_SETLIGHTS, 0x7) != 0)
-		exit_sys("ioctl");
-
-	close(fd);
-
-	return 0;
-}
-
-void exit_sys(const char *msg)
-{
-	perror(msg);
-
-	exit(EXIT_FAILURE);
-}
+/* load (bu satırı dosyaya kopyalamayınız) */
 
 #!/bin/bash
 
@@ -64355,134 +64645,179 @@ mode=666
 /sbin/insmod ./$module.ko ${@:2} || exit 1
 major=$(awk "\$2 == \"$module\" {print \$1}" /proc/devices)
 rm -f $module
-mknod $module c $major 0
-chmod $mode $module
+mknod -m $mode $module c $major 0
+
+/* unload (bu satırı dosyaya kopyalamayınız) */
+
+#!/bin/bash
+
+module=$1
+mode=666
+
+/sbin/rmmod ./$module.ko || exit 1
+rm -f $module
+
+/* app.c */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include "irq-driver.h"
+
+#define CAPS_LOCK       0x04
+#define NUM_LOCK       0x02
+#define SCROLL_LOCK       0x04
+
+void exit_sys(const char *msg);
+
+int main(int argc, char *argv[])
+{
+    int fd;
+    int key;
+    int keycode;
+
+    if (argc != 2) {
+        fprintf(stderr, "wrong number of arguments!..\n");
+        exit(EXIT_FAILURE);
+    }
+
+    keycode = atoi(argv[1]);
+
+    if ((fd = open("irq-driver", O_RDONLY)) == -1)
+        exit_sys("open");
+
+    if (ioctl(fd, IOC_SETLIGHTS, keycode) == -1)
+        exit_sys("ioctl");
+
+    close(fd);
+}
+ 
+void exit_sys(const char *msg)
+{
+	perror(msg);
+
+	exit(EXIT_FAILURE);
+}
 
 /*--------------------------------------------------------------------------------------------------------------------------
-    Aslında IO portları Linux sistemlerinde user mod programlar tarafından da /dev/port isimli karakter aygıt sürücüsü yoluyla da
-    kullanılabilmektedir. Ancak bu aygıt sürücünün read ve/veya write modda açılabilmesi için prosrdin etkin kullanıcı id'sinin 0 olması 
-    gerekmektedir. (Yani böyle programları sudo yaparak çalıştırmalıyız.)
-
-    Bu kullanım için aygıt sürücü user mode'dan open fonksiyonuyla açılır. Her byte bir portu belirtmektedir. lseek fonksiyonu ile ilgili porta dosya göstericisi
-    konumlandırılır. Sonra read/write işlemi uygulanır. 
-
-    /dev/mem isimli karakter aygıt sürücüsü de fiziksel belleğe erişmek için kullanılmaktadır. Bu aygıt sürücü açılıp lseek ile belli bir offset'e konumlanılırsa
-    okuma ya da yazma işlemi konumlandırılan offset fiziksel adres belirtecek biçimde doğrudan fiziksel RAM'e yapılmaktadır. /dev/kmem aygıt sürücüsü benzer biçimdedir. Ancak adresler fiziksel değil sanal adres belirtmektedir. 
----------------------------------------------------------------------------------------------------------------------------*/
-
-/*--------------------------------------------------------------------------------------------------------------------------
-    Derleyiciler ve işlemciler tarafından yapılan önemli bir optimizasyon temasına "komutların yer değiştirilmesi (instruction reordering)"
-    denilmektedir. Bu optimizasyon derleyici tarafından da bizzat işlemcinin kendisi tarafından da yapılabilmektedir. Burada biribirlerini normal
-    bir durumda etkilemeyecek iki ya da daha fazla ayrı makine komutunun yerleri daha hızlı çalışma sağlamak için değiştirilmektedir. 
-    Bu tür yer değiştirmeler normak user mod programlarda hiçbir davranış değişiklğine yol açmazlar. Ancak işletim sistemi ve aygıt sürücü kodlarında
-    ve özellikle IO portlarına erişim söz konusu olduğunda bu optimizasyon olumsuz yan etkilere yol açabilmektedir. Örneğin birbirleriyle alakasız iki adrese
-    yazma yapılması durumunda yazma komutlarının yer değiştirmesi işlemcinin bu işleri daha hızlı yapabilmesine yol açabilmektedir. Fakat IO portları ve Memory mapped IO 
-    söz konusu olduğunda bu sıralama değişikliği istenmeyen olumsuz sonuçlar doğurabilmektedir. İşte bu yer değiştirmeyi ortadan kaldırmak için bariyer koyma yöntemi
-    uygulanmaktadır. Bariyerin yukarısı ve aşağısı derleyici ve işlemci tarafından yer değiştiremez. 
+    Derleyiciler ve işlemciler tarafından yapılan önemli bir optimizasyon temasına "komutların yer değiştirilmesi (instruction 
+    reordering)" denilmektedir. Bu optimizasyon derleyici tarafından da bizzat işlemcinin kendisi tarafından da yapılabilmektedir. 
+    Burada biribirlerini normal bir durumda etkilemeyecek iki ya da daha fazla ayrı makine komutunun yerleri daha hızlı çalışma 
+    sağlamak için değiştirilmektedir. Bu tür yer değiştirmeler normal user mod programlarda hiçbir davranış değişiklğine yol 
+    açmazlar. Ancak işletim sistemi ve aygıt sürücü kodlarında ve özellikle IO portlarına erişim söz konusu olduğunda bu 
+    optimizasyon olumsuz yan etkilere yol açabilmektedir. Örneğin birbirleriyle alakasız iki adrese yazma yapılması durumunda 
+    yazma komutlarının yer değiştirmesi işlemcinin bu işleri daha hızlı yapabilmesine yol açabilmektedir. Fakat IO portları ve 
+    memory mapped IO söz konusu olduğunda bu sıralama değişikliği istenmeyen olumsuz sonuçlar doğurabilmektedir. İşte bu yer 
+    değiştirmeyi ortadan kaldırmak için "bariyer (barrier)" koyma yöntemi uygulanmaktadır. Derleyici ve işlemci bariyerin yukarısıyla
+    aşağısını yer değiştirmemektedir. Bariyer fonksiyonları şunlardır:
+    
+    #include <asm/system.h>
 
     void rmb(void);
     void wmb(void);
     void mb(oid);
 
-    rmb fonksiyonun aşağısanki kodlar yukarısındaki okuma işlemleri yapıldıktan sonra yapılırlar. wmb fonksiyonun ise yukarısındaki yazma işlemleri yapıldıktan sonra aşağıdaki işlemler 
-    yapılırlar. mb fonksiyonu ise hem okuma hem yazma için yukarıdaki ve aşağıaki kodları birbirlerinden ayırmaktadır. Örneğin PORT1 portuna yazma yapıldıktan sonra
-    PORT2 portuna yazma yapılacak olsun. Şöyle bir bariyer kullanmalıyız:
+    rmb fonksiyonun aşağısındaki kodlar yukarısındaki okuma işlemleri yapıldıktan sonra yapılırlar. wmb fonksiyonun ise 
+    yukarısındaki yazma işlemleri yapıldıktan sonra aşağıdaki işlemler yapılırlar. mb fonksiyonu ise hem okuma hem yazma 
+    için yukarıdaki ve aşağıaki kodları birbirlerinden ayırmaktadır. Örneğin PORT1 portuna yazma yapıldıktan sonra PORT2 
+    portuna yazma yapılacak olsun. Şöyle bir bariyer kullanmalıyız:
 
     outb(cmd1, port1);
     wmb();
     outb(cmd2, port2);
-
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
-    Memory Mapped IO işlemi pek çok mimaride göstericilerle yapılabilmektedir. Yani aslında bu mimarilerde bunlar için özel kernel fonksiyonlarının
-    kullanılmasına gerek yoktur. Ancak bazı mimarilerde memory mapped io işlemi için özel bazı işlemlerin de yapılması gerekebilmektedir. Bu nedenle bu işlemlerin
-    taşınabilir yapılabilmesi için özel kernel fonksiyonlarının kullanılması tavsiye edilir. 
+    Memory Mapped IO işlemi pek çok mimaride normal göstericilerle yapılabilmektedir. Yani aslında bu mimarilerde memory mapped
+    IO için özel kernel fonksiyonlarının kullanılmasına gerek yoktur. Ancak bazı mimarilerde memory mapped io işlemi için özel 
+    bazı işlemlerin de yapılması gerekebilmektedir. Bu nedenle bu işlemlerin taşınabilir yapılabilmesi için özel kernel 
+    fonksiyonlarının kullanılması tavsiye edilir. 
 
-    Tıpkı normal IO işlemlerinde olduğu gibi memory-mapped-io için de iki farklı aygıt aynı adres bölgesini kullanmasın diye bir registration işlemi
-    yapılabilmektedir. Bu işlemler request_mem_region ve release_mem_region fonksiyonlarıyla yapılmaktadır:
+    Tıpkı normal IO işlemlerinde olduğu gibi memory mapped IO için de iki farklı aygıt aynı adres bölgesini kullanmasın diye bir 
+    registration işlemi söz konusudur. Bu işlemler request_mem_region ve release_mem_region fonksiyonlarıyla yapılmaktadır:
+
+    #include <linux/ioport.h>
 
     struct resource *request_mem_region(unsigned long start, unsigned long len, const char *name);
 
-    Fonksiyonun birinci parametresi başlangıç bellek adresini, ikinci parametresi alanın uzunluğunu belitmektedir. Üçüncü parametre /proc/iomem dosyasında görüntülenecek isimdir. 
-    Fonksiyon başarı durumunda resource isimli bir yapı adresine, başarısızlık durumunda NULL adrese geri dönmektedir. 
+    Fonksiyonun birinci parametresi başlangıç bellek adresini, ikinci parametresi alanın uzunluğunu belitmektedir. Üçüncü parametre 
+    ise "/proc/iomem" dosyasında görüntülenecek isimdir. Fonksiyon başarı durumunda resource isimli bir yapı nesnesinin adresine, 
+    başarısızlık durumunda NULL adrese geri dönmektedir. Daha önce rgister ettirilmiş olan bellek bölgesini serbest bırakmak için 
+    (yani register ettirilmemiş hale getirmek için) release_mem_region fonksiyonu kullanılmaktadır. Fonksiyonun prototipi şöyledir:
+
+    #include <linux/ioport.h>
 
     void release_mem_region(unsigned long start, unsigned long len);
 
-    Fonksiyon daha önce rgister ettirilmiş olan bellek bölgesini register ettirilmemiş hale getirmektedir. Mamory mapped IO ile belirtilen bellek 
-    alanına erişmek için kullanılan fonksiyonlar da şunlardır:
+    Fonksiyonun birinci parametresi başlangıç bellek adresini, ikinci parametresi ise uzunluğu belirtmektedir. 
+
+    Aşağıdaki fonksiyonlar addr ile belirtilen bellek adresinden 1 byte, 2 byte ve 4 byte okurlar. 
+
+    #include <asm/io.h>
 
     unsigned int ioread8(void *addr);
     unsigned int ioread16(void *addr);
     unsigned int ioread32(void *addr);
 
-    Bu fonksiyonlar addr ile belirtilen bellek adresinde 1 byte, 2 byte ve 4 byte okurlar. 
+   Aşağıdaki fonksiyonlar ise addr ile belirtilen bellek adresine 1 byte, 2 byte ve 4 byte bilgi yazmaktadır:
+
+    #include <asm/io.h>
 
     void iowrite8(u8 value, void *addr);
-    void iowrite8(u16 value, void *addr);
-    void iowrite8(u32 value, void *addr);
+    void iowrite16(u16 value, void *addr);
+    void iowrite32(u32 value, void *addr);
 
     Yukarıdaki fonksiyonların rep'li versiyonları da vardır:
+
+    #include <asm/io.h>
 
     void ioread8_rep(void *addr, void *buf, unsigned long count);
     void ioread16_rep(void *addr, void *buf, unsigned long count);
     void ioread32_rep(void *addr, void *buf, unsigned long count);
 
-    Bu fonksiyonlar count kere aynı addr adresinden 1 byte, 2 byte ve 4 byte okuyarak buf adresine yerleştirme yapmaktadır. 
-
     void iowrite8_rep(void *addr, const void *buf, unsigned long count);
     void iowrite16_rep(void *addr, const void *buf, unsigned long count);
     void iowrite32_rep(void *addr, const void *buf, unsigned long count);
 
-    Bu fonksiyonlar da ikinci parametresiyle belirtilen adresten başlayarak count kadar 1 byte, 2 byte, 4 byte'lık bilgileri hep birinci parametreyle belşrtşlen adrese 
-    aktarmaktadır. Bir de blok kopyalaması yapan fonksiyonlar vardır:
+    Bu fonksiyonlar memmory mapped IO adresinden belli bir adrese belli miktarda (count parametresi) byte, word ya da dword transfer 
+    etmektedir.
+
+    Tıpkı memcpy fonksiyonunda olduğu gibi memory mapped IO adresi ile bellek arasında blok kopyalaması yapan iki fonksiyon 
+    bulunmaktadır:
+
+    #include <asm/io.h>
 
     void memcpy_fromio(void *dest, const void *source, unsigned int count);
     void memcpy_toio(void *dest, const void *source, unsigned int count);
 
-    Belli bir adresten itibaresn n byte dolduran fonksiyon da şöyledir:
+    Belli bir memory mapped IP adresine belli bir byte'ı n defa dolduran fonksiyon da şöyledir:
+
+    #include <asm/io.h>
 
     void memset_io(void *dest, u8 value, unsigned int count);
 
-    Aygıtın kullandığı bellek adresi genellikle fiziksel adrestir. Örneğin aygıt 0xFFFF8000 gibi bir adresi kullanıyorsa bu genellikle fiziksel adrestir. Halbuki 
-    aygıt sürücünün bu fiziksel adrese erişebilmesi için bu dönüşümü yapacak sayfa tablosu girişlerin olması gerekir. İşte bu girişleri elde edebilmek için şu fonksiyonlar
-    bulundurulmuştur:
+    Bu fonksiyonu memset fonksiyonuna benzetebilirsiniz.
+
+    Aygıtın kullandığı bellek adresi genellikle fiziksel adrestir. Örneğin aygıt 0xFFFF8000 gibi bir adresi kullanıyorsa bu 
+    genellikle   fiziksel anlamına gelir. Halbuki  aygıt sürücünün bu fiziksel adrese erişebilmesi için bu dönüşümü yapacak sayfa 
+    tablosu girişlerin olması gerekir. İşte bu girişleri elde edebilmek için şu fonksiyonlar bulundurulmuştur:
+
+    #include <asm/io.h>
 
     void *ioremap(unsigned long physical_address, unsigned long size);
 
-    Bu fonksiyon fiziksel adrese erişebilmek için gereken sayfa tablosu adresini bize verir. Gerçi genellikle fiziksel RAM daha önceden de belirtildiği gibi Linux'ta
-    sanal belleğin PAGE_OFFSET ile belirtilen kısmından başlanarak map edilmiştir. 
+    Bu fonksiyon fiziksel adrese erişebilmek için gereken sayfa tablosu adresini bize verir. Gerçi genellikle fiziksel RAM 
+    daha önceden de belirtildiği gibi Linux'ta sanal belleğin PAGE_OFFSET ile belirtilen kısmından başlanarak map edilmiştir. 
 
     Bu işlemi geri almak için iounmap fonksiyonu kullanılmaktadır:
 
-    void iounmap(voi,d *addr);
+    #include <asm/io.h>
 
+    void iounmap(void *addr);
 ---------------------------------------------------------------------------------------------------------------------------*/
-
-/*--------------------------------------------------------------------------------------------------------------------------
-    Derleyiciler ve işlemciler tarafından yapılan önemli bir optimizasyon temasına "komutların yer değiştirilmesi (instruction reordering)"
-    denilmektedir. Bu optimizasyon derleyici tarafından da bizzat işlemcinin kendisi tarafından da yapılabilmektedir. Burada biribirlerini normal
-    bir durumda etkilemeyecek iki ya da daha fazla ayrı makine komutunun yerleri daha hızlı çalışma sağlamak için değiştirilmektedir. 
-    Bu tür yer değiştirmeler normak user mod programlarda hiçbir davranış değişiklğine yol açmazlar. Ancak işletim sistemi ve aygıt sürücü kodlarında
-    ve özellikle IO portlarına erişim söz konusu olduğunda bu optimizasyon olumsuz yan etkilere yol açabilmektedir. Örneğin birbirleriyle alakasız iki adrese
-    yazma yapılması durumunda yazma komutlarının yer değiştirmesi işlemcinin bu işleri daha hızlı yapabilmesine yol açabilmektedir. Fakat IO portları ve Memory mapped IO 
-    söz konusu olduğunda bu sıralama değişikliği istenmeyen olumsuz sonuçlar doğurabilmektedir. İşte bu yer değiştirmeyi ortadan kaldırmak için bariyer koyma yöntemi
-    uygulanmaktadır. Bariyerin yukarısı ve aşağısı derleyici ve işlemci tarafından yer değiştiremez. 
-
-    void rmb(void);
-    void wmb(void);
-    void mb(oid);
-
-    rmb fonksiyonun aşağısanki kodlar yukarısındaki okuma işlemleri yapıldıktan sonra yapılırlar. wmb fonksiyonun ise yukarısındaki yazma işlemleri yapıldıktan sonra aşağıdaki işlemler 
-    yapılırlar. mb fonksiyonu ise hem okuma hem yazma için yukarıdaki ve aşağıaki kodları birbirlerinden ayırmaktadır. Örneğin PORT1 portuna yazma yapıldıktan sonra
-    PORT2 portuna yazma yapılacak olsun. Şöyle bir bariyer kullanmalıyız:
-
-    outb(cmd1, port1);
-    wmb();
-    outb(cmd2, port2);
-
----------------------------------------------------------------------------------------------------------------------------*/
-
+<BURADA KALDIK>
 /*--------------------------------------------------------------------------------------------------------------------------
     Blok aygıt sürücüleri (block device drivers) disk benzeri birimlerden bloklu okuma ve yazma yapabilmek için kullanılan özel aygıt sürücülerdir. 
     Disk benzeri birimlerden bir hamlede okunabilecek ya da yazılabilecek bilgi miktarına "sektör" denilmektedir. Yani bu tür aygıtlar transferi 
