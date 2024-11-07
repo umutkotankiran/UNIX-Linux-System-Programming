@@ -67950,11 +67950,12 @@ void exit_sys(const char *msg)
     00                              8 Byte                      Dosya ismi (File Name)
     08                              3 Byte                      Dosya Uzantısı (Extension)
     0B                              1 Byte                      Dosya Özelliği (Attribute)
-    0C                              2 Byte                      Kullanılmıyor (Reserved)
+    0C                              1 Byte                      Kullanılmıyor (Reserved)
+    0D                              BYTE                        Yaratılma Zamanının Milisaniyesi
     0E                              WORD                        Dosyanın Yaratılma Zamanı (Creation Time)
     10                              WORD                        Dosyanın Yaratılma Tarihi (Creation Date)
     12                              WORD                        Son Okunma Zamanı (Last Access Time)
-    14                              2 Byte                      Kullanılmıyor (Reserved)
+    14                              WORD                        Kullanılmıyor (Reserved)
     16                              WORD                        Son Yazma Zamanı (Last Write Time)
     18                              WORD                        Son Yazma Tarihi (Last Write Date)
     1A                              WORD                        İlk Cluster Numarası (First Cluster)
@@ -68009,21 +68010,587 @@ void exit_sys(const char *msg)
     Burada WORD değerin düşük anlamlı 5 biti gün için, sonraki 4 biti ay için ve geri kalan 7 biti yıl için bulundurulmuştur. 
     Tarih bilgisinin yıl alanı için 7 bit ayrıldığına göre buraya nasıl 2024 gibi bir tarih yerleştirilebilmektedir. İşte DOS
     işletim sisteminin ilk versiyonu 1980 yılında oluşturulduğu için buradaki tarih bilgisi her zmana 1980 yılından itibaren 
-    bir offset belirtmektedir. Yani örneğin 2024 yılı için buradaki yıl bitlerine 44 kodlanmaktadır. 
+    bir offset belirtmektedir. Yani örneğin 2024 yılı için buradaki yıl bitlerine 44 kodlanmaktadır. Örneğin bir dosyanın 32'lik
+    dizin girişi şöyledir:
+
+    58 20 20 20 20 20 20 20 54 58 54 20 18 AB 03 B3 
+    59 59 59 59 00 00 09 B3 59 59 06 00 1B 00 00 00
+
+    Buaradk 0x18'inci offset'ten little endian formatta WORD çekersek 0x5959 değerini elde ederiz. Şimdi bu WORD değeri 2'lik
+    sistemde ifade edelim:
+
+    5         9       5       9
+    0101    1001    0101    1001
+
+    Şimdi de yukarıda belirttiğimiz gibi sayıyı bit'lerine ayrıştıralım:
+
+    0101100 => 44    1010 => 10     11001 => 25
+      yıl             ay             gün
+
+    O halde buradaki tarih 25/10/2024'tür.
+
+    16 bitle (WORD ile) zaman bilgisi de şöyşe kodlanmıştır:
+
+    15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0
+     h  h  h  h  h  m m m m m m s s s s s
+
+    Burada bir noktayaya dikkat ediniz: 0 ile 24 arasındaki saatler 5 bit ile tutulabilir. 0 ile 60 arasındaki dakikalar ise 
+    ancak 6 bit ile tutulabilir. Burada geriye 5 bit almıştır. Dolayısıyla saniyeleri tutmak için bu 5 bit yeterli değildir. 
+    İşte FAT dosya sistemini tasarlayanlar saniyedeki duyarlılığı azaltarak saniye değerinin yarısını buraya yazılması yoluna
+    gitmişlerdir. Yani zaman bilgisinin saniye kısmı eski FAT12 ve FAT16 sistemlerinde tam duyarlılıkla tutulamamaktadır. 
+    Örneğin yukarıdaki dizin girişinde dosyanın son değiştirilme zamanı için 0x16'ıncı offset'ten WORD çektiğimizde 0xB309
+    değerini elde ederiz. Şimdi bu değeri 2'lik sisteme dönüştürelim:
+
+     B       3       0       9
+    1011    0011    0000    1001
+
+    Şimdi de bit alanlarını ayrıştıralım:
+
+    10110 => 22     011000 => 24    01001 => 9
+      saat            dakika          saniye
+
+    Burada işletim sistemi saniye alanına mevcut saniyenin yarısını yazdığına göre bu dosyanın değiştirilme zamanı 22:24:18
+    olacaktır. 
+
+    Burada küçük bir noktaya dikkatinizi çekmek istiyoruz: Eskiden dizin girişinin 0x0D numaralı BYTE'ı da "reserved" durumdaydı
+    sonra bu byte'a dosyanın yaratılma zamanına ilişkin milisaniye değeri yerleştirildi. Dolayısıyla artık dosyanın yaratılma 
+    zamanı saniye duyarlılığında ifade edilebilmektedir. Bu durumda yaratılma zamanındaki saniye 2 ile çarpılıp buradaki 
+    milisaniye ile toplanmaktadır. Tabii genel olarak Microsoft'un arayüzü dosyaların zaman gilfgilerinin saniyelerini default
+    durumda zaten gmstermemektedir. Örneğin:
+
+    D:\>dir
+    Volume in drive D is YENI BIRIM
+    Volume Serial Number is 2C68-EBFD
+
+    Directory of D:\
+
+    25.10.2024  22:24                27 x.txt
+    25.10.2024  22:26                 8 con
+    25.10.2024  22:26                59 y.txt
+    25.10.2024  22:28    <DIR>          mydir
+                   3 File(s)             94 bytes
+                1 Dir(s)      52.194.304 bytes free
+
+    - İlk Cluster Numarası: Biz daha önce FAT bölümünü incelerken bir dosyanın cluster zincirini elde edebilmek için onun 
+    ilk cluster numarasının bilinmesi gerektiğini belirtmiştik. (Bir bağlı listeyi dolaşabilmek için onun ilk düğümünün yerinin
+    bilinmesi gerektiğini anımsayınız.) İşte bir dosyanın ilk cluster numaarası dizin girişinde saklanmaktadır. Yani işletim 
+    sistemi önce dosyanın dizin girişini bulmakta sonra FAT'ten onun cluster zincirini elde etmektedir. Yukarıdaki dosyasının 
+    dizin girişini yeniden veriyoruz:
+
+    58 20 20 20 20 20 20 20 54 58 54 20 18 AB 03 B3 
+    59 59 59 59 00 00 09 B3 59 59 06 00 1B 00 00 00
+
+    Burada söz konusu dosyanın ilk cluster numarası dizin girişinin 0x1A ofsfetinden başlayan WORD bilgidir. Bu bilgiyi örnek
+    dizin girişinden çektiğimizde 0x006 değerini elde ederiz. Bu durumda bu dosyanın ilk cluster numarası 6'dır. 
+    
+    - Dosyanın Uzunluğu: Dosyanın uzunluğu dizin girişindeki son 4 byte'lık (DWORD alan) alanda tutulmaktadır. İşletim sistemi
+    dosyanın son cluster'ındaki geçerli byte sayısını bu uzunluktan yararlanarak elde etmektedir. Örneğin yukarıdaki dizin 
+    girişine ilişkin dosya uzunluğu 0x0000001B = 27'dir. Dizin dosyalarına ilişkin uzunluklar için işletim sistemi hep 0 
+    değerini yazmaktadır. 
+
+    Dizinler de bir dosya gibi ele alınmaktadır. Dolayısıyla dizinlerin de bir cluster zinciri vardır. Ancak FAT12 ve FAT16
+    sistemlerinde kök dizinin yeri ve uzunluğu baştan bellidir. Kök dizin için bir cluster zinciri yoktur. FAT32 dosya sisteminde
+    kök dizin de normal bir dizin gibi büyüyebilmektedir. Yani kök dizinin de bir cluster zinciri vardır. 
+
+    32'lik bir dizin girişini aşağıdaki gibi bir yapıyla temsil edebiliriz:
+
+    #pragma pack(1)
+    
+    typedef struct tagDIR_ENTRY {
+        unsigned char name[8];
+        unsigned char ext[3];
+        uint8_t attr;
+        char reserved1[1];
+        uint8_t crtime_ms;
+        uint16_t crdate;
+        uint16_t crtime;
+        uint16_t rdtime;
+        char reserved2[2];
+        uint16_t wrtime;
+        uint16_t wrdate;
+        uint16_t fclu;
+        uint32_t size;
+    } DIR_ENTRY;
+
+    #pragma pack()
+
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
+    Pekiyi bir dosya silindiğinde ne olur? İşletim sistemi FAT dosya sisteminde bir dosya silindiğinde iki işlem yapar:
 
+    1) Dosyanın silindiğinin anlaşılması için dizin girişindeki dosya isminin ilk karakterini 0xE5 olarak değiştirir. Böylece 
+    dizin girişlerini tararken 32'lik girişin ilk karajkter 0xE5 ise o dizin girişini silindiği gerekçesiyle atlamaktadır. 
+    Ancak işletim sistemi bu 32'lik dizin girişinin diğer byte'larına dokunmamaktadır.
+
+    2) İşletim sistemi dosyanın cluster zincirini de sıfırlamaktadır. Böylece bu dosyanın FAT'te kapladığı alan artık "boş" 
+    gözükecektir. Ancak işletim sistemi dosyanın Data bölümündeki cluster'ları üzerinde herhangi bir işlem yapmaz.
+
+    Pekiyi FAT dosya sisteminde "undelete" yapan programlar nasıl çalışmaktadır? İşte bu programlar dosyanın dizin girişine 
+    bakıp onun ilk cluster'ının numarasını elde edip FAT bölümünde yersine bir algoritmayla onun cluster zincirini yenidne 
+    oluşturmaya çalışmaktadır. Ancak böyle bir kurtarmanın garantisi yoktur. Çünkü işletim sistemi boşaltılmış cluster'ları 
+    başka bir dosya için tahsis etmiş olabilir. Ya da FAT'teki cluster zincirini tahmin eden programlar bu konuda yanılabilmektedir. 
+    Ancak ne olursa olsun dosyanın ilk karakteri silindiği için bu karakter kurtarma sırasında kullanıcıya sorulmaktadır.
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
-
+                                         176. Ders 01/11/2024 - Cuma
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
+    FAT12 ve FAT16 sistemlerinin orijinali yalnızca 8+3'lük dosya isimlerini destekliyordu. Yani bir dosyanın ismi en fazla 
+    8 karakterden uzantısı da en fazla 3 karakterden oluşabiliyordu. 90'lı yılların ortalarına doğru Microsoft FAT dosya 
+    sisteminde uzun dosya isimlerinin de kullanılmasına olanak sağlamıştır. Microsoft bunu yaparken geçmişe doğru uyumu 
+    mümkün olduğunca korumaya da çalışmıştır. Microsoft'un bu yeni düzenlemesinde 8+3'ten daha uzun dosya izimleri birden fazla
+    32'lik girişle temsil edilmektedir. Ancak Microsoft geçmişe doğru uyumumu korumak için her uzun dosya isminin bir de 8+3'lük
+    kısa ismini oluşturmak istemiştir. Bu durumda uzun dosya isimlerinin kullanıldığı FAT sistemlerinde 8+3'lük alan sığmayan 
+    dosya isimleri aşağıdaki formata göre dizin girişlerinde bulundurulmaktadır:
 
+    <32'lik giriş>
+    <32'lik giiriş>
+    ...
+    <32'lik giriş>
+    <dosyanın 8+3'lük kısa ismi>
+
+    Tabii eğer istenirse (örneğin Linux böyle yapmaktadır) 8+3'lük sınıfı aşmayana dosyalar da sanki uzun isimli dosyalarmış gibi 
+    saklanabilmektedir. Burada dosyanın 8+3'lük kısa isminin dışındaki uzun ismi de 32'lik girişlerde ASCII olarak değil UNICODE
+    olarak turulmaktadır. 
+
+    Uzun dosya isimlerine ilişkin girişlerin sonunda 8+3'lük kısa bir girişin de bulundurulduğunu belirtmiştik. Peki bu uzun dosya 
+    isminden kısa giriş nasıl elde edilmektedir?
+
+    Uzun dosya isimlerinin tutulduğu 32'lik girişlerin ilk byte'ında önemli bilgiler vardır. Bu byte'a "sıra numarası (sequence 
+    number)" denilmektedir. Bu byte bit bit anlamlandırılmaktadır. Byte'ın bitlerinin anlamları şöyledir:
+
+    D L X X  X X X X 
+
+    Burada en yükske anlamlı bit olan D biti 32'lik girişin silinip silinmeidğini anlatmaktadır. Eğer bu giriş silinmişse bu
+    bit 1, silinmemişse 0 olacaktır. 7 numaralı bit (L biti) 32'lik girişlerin aşağıdan yukarıya doğru son giriş olup olmadığını 
+    belirtmektedir. Ger kalan 6 bit 32'lik girişlerin sıra numarasını belirtir. Yani her 32'lik girişin bir sıra numarası vardır. 
+    Her 32'lik giriş uzun dosya isminin 13 UNICODE karakterini tutmaktadır. Pekiyi biz 32'lik bir girişin eski kısa ilişkin 
+    32'lik bir giriş mi yoksa uzun ismin 32'lik girişlerinden biri mi olduğunu nasıl anlayabiliriz? İşte bunun için 32'lik 
+    girişin 0x0B offset'inde bulunan özellik byte'ının düşük anlamlı 4 bitine bakmak gerekir. Eğer bu 4 bitin hepsi 1 ise 
+    bu 32'lik giriş uzun dosya isminin 32'lik girişlerinden biridir. 
+    
+    Aşağıda uzun dosya isimlerine ilişkin 32'lik girişlerin genel formatı verilmiştir. Ayrıntılı format için Microsoft'un 
+    "FAT File System Specification" dokümanına başvurabilirsiniz. 
+
+
+    Field name	    Offset	Size	Description
+    LDIR_Ord	    0	    1	    Sequence number (1-20) to identify where this entry is in the sequence of LFN entries to compose an LFN. One indicates the top part of the LFN and any value with LAST_LONG_ENTRY flag (0x40) indicates the last part of the LFN.
+    LDIR_Name1	    1	    10	    Part of LFN from 1st character to 5th character.
+    LDIR_Attr	    11	    1	    LFN attribute. Always ATTR_LONG_NAME and it indicates this is an LFN entry.
+    LDIR_Type	    12	    1	    Must be zero.
+    LDIR_Chksum	    13	    1	    Checksum of the SFN entry associated with this entry.
+    LDIR_Name2	    14	    12	    Part of LFN from 6th character to 11th character.
+    LDIR_FstClusLO	26	    2	    Must be zero to avoid any wrong repair by old disk utility.
+    LDIR_Name3	    28	    4	    Part of LFN from 12th character to 13th character.
+
+    Biz sonraki örneklerde uzun dosya isimlerini dikkate almayacağız. Onları geçeceğiz. Aşağıda kök uzun dosya isimlerinin 
+    ve silinmiş dosya isimlerinin geçilerek kök dosya sistemindeki dosyaların listesini elde eden bir fonksiyon verilmiştir.
 ---------------------------------------------------------------------------------------------------------------------------*/
 
+/* fatsys.h */
+
+#ifndef FATSYS_H_
+#define FATSYS_H_
+
+#include <stdint.h>
+
+#define FILE_INFO_LENGTH        32
+#define CHAIN_DEF_CAPACITY		8
+#define ROOT_DEF_CAPACITY		8
+#define DIR_ENTRY_SIZE			32
+
+/* Type Declarations */
+
+typedef struct tagBPB {
+	uint16_t fatlen;		/* number of sectors in FAT (A) */
+	uint16_t rootlen;		/* number of sectors in ROOT (NA) */
+	uint16_t nfats;	        /* number of copies of FAT (A) */
+	uint32_t tsects;		/* total sector (A) */
+	uint16_t bps;			/* byte per sector(A) */
+	uint16_t spc;			/* printf("%lu\n", )sector per cluster(A) */
+	uint16_t rsects;		/* reserved sectors(A) */
+	uint8_t mdes;			/* media descriptor byte(A) */
+	uint16_t spt;			/* sector per track(A) */
+	uint16_t rootents;		/* root entry (A) */
+	uint16_t nheads;		/* number of heads (A) */
+	uint16_t hsects;		/* number of hidden sector( A) */
+	uint16_t tph;			/* track per head (NA) */
+	uint16_t fatloc;		/* fat directory location (NA) */
+	uint16_t rootloc;		/* root directory location (NA) */
+	uint16_t dataloc;		/* first data sector location (NA) */
+    uint32_t datalen;       /* number of sectors in Data (NA) */
+	uint32_t serial;		/* Volume Serial Number (A) */
+	char vname[12];         /* Volume Name (A) */
+} BPB;
+
+typedef struct tagFATSYS {
+    int fd;             /* Volprintf("%lu\n", )ume file descriptor */
+    BPB bpb;            /* BPB info */
+    uint32_t fatoff;    /* offset of FAT */
+    uint32_t rootoff;   /* offset of root directory */
+    uint32_t dataoff;   /* offset of DATA */
+    uint32_t clulen;    /* cluster length as bytes */
+    uint8_t *fat;       /* FAT sectors */
+	uint8_t *rootdir;	/* Root sectors */
+    /* ... */
+} FATSYS;
+
+#pragma pack(1)
+
+typedef struct tagDIR_ENTRY {
+	unsigned char name[8];
+	unsigned char ext[3];
+	uint8_t attr;
+	char reserved1[1];
+	uint8_t crtime_ms;
+	uint16_t crdate;
+	uint16_t crtime;
+	uint16_t rdtime;
+	char reserved2[2];
+	uint16_t wrtime;
+	uint16_t wrdate;
+	uint16_t fclu;
+	uint32_t size;
+} DIR_ENTRY;
+
+#pragma pack()
+
+/* Function prototypes */
+
+int read_bpb(int fd, BPB *bpb);
+FATSYS *open_fatsys(const char *path);
+int close_fatsys(FATSYS *fatsys);
+int read_cluster(FATSYS *fatsys, uint32_t clu, void *buf);
+int wite_cluster(FATSYS *fatsys, uint32_t clu, const void *buf);
+uint16_t *getclu_chain16(FATSYS *fatsys, uint32_t firstclu, uint16_t *count);
+uint16_t *getclu_chain12(FATSYS *fatsys, uint32_t firstclu, uint16_t *count);
+void freeclu_chain(uint16_t *chain);
+DIR_ENTRY *get_rootents(FATSYS *fatsys, uint16_t *count);
+
+#endif
+
+/* fatsys.c */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include "fatsys.h"
+
+int read_bpb(int fd, BPB *bpb)
+{
+    uint8_t bsec[512];
+
+    if (read(fd, bsec, 512) == -1)
+        return -1;
+
+    bpb->bps = *(uint16_t *)(bsec + 0x0B);
+    bpb->spc = *(uint8_t *)(bsec + 0x0D);
+    bpb->rsects = *(uint16_t *)(bsec + 0x0E);
+    bpb->fatlen = *(uint16_t *)(bsec + 0x16);
+    bpb->rootlen = *(uint16_t *)(bsec + 0x11) * FILE_INFO_LENGTH / bpb->bps;
+    bpb->nfats = *(uint8_t *)(bsec + 0x10);
+	if (*(uint16_t *)(bsec + 0x13))
+		bpb->tsects = *(uint16_t *)(bsec + 0x13);
+	else
+		bpb->tsects = *(uint32_t *)(bsec + 0x20);
+    bpb->mdes = *(bsec + 0x15);
+    bpb->spt = *(uint16_t *)(bsec + 0x18);
+    bpb->rootents = *(uint16_t *)(bsec + 0x11);
+    bpb->nheads = *(uint16_t *)(bsec + 0x1A);
+    bpb->hsects = *(uint16_t *)(bsec + 0x1C);
+    bpb->tph = (uint16_t)(bpb->tsects / bpb->spt / bpb->nheads);
+    bpb->fatloc = bpb->rsects;
+    bpb->rootloc = bpb->rsects + bpb->fatlen *bpb->nfats;
+    bpb->dataloc = bpb->rootloc + bpb->rootlen;
+    bpb->datalen = bpb->tsects - bpb->dataloc;
+    bpb->serial = *(uint32_t *)(bsec + 0x27);
+    memcpy(bpb->vname, bsec + 0x2B, 11);
+    bpb->vname[11] = '\0';
+
+    return 0;
+}
+
+FATSYS *open_fatsys(const char *path)
+{
+    FATSYS *fatsys;
+    int fd;
+
+    if ((fatsys = (FATSYS *)malloc(sizeof(FATSYS))) == NULL)
+        return NULL;
+
+    if ((fd = open(path, O_RDWR)) == -1)
+        goto EXIT1;
+    
+    if (read_bpb(fd, &fatsys->bpb) == -1) 
+        goto EXIT2;
+
+    fatsys->fd = fd;
+    fatsys->fatoff = fatsys->bpb.fatloc * fatsys->bpb.bps;
+    fatsys->rootoff = fatsys->bpb.rootloc * fatsys->bpb.bps;
+    fatsys->dataoff = fatsys->bpb.dataloc * fatsys->bpb.bps;
+    fatsys->clulen = fatsys->bpb.bps * fatsys->bpb.spc;
+
+    if ((fatsys->fat = (uint8_t *)malloc(fatsys->bpb.fatlen * fatsys->bpb.bps)) == NULL) 
+        goto EXIT2;
+
+    if ((fatsys->rootdir = (uint8_t *)malloc(fatsys->bpb.rootlen * fatsys->bpb.bps)) == NULL) 
+        goto EXIT3;
+        
+    if (lseek(fatsys->fd, fatsys->fatoff, SEEK_SET) == -1)
+        goto EXIT4;
+
+    if (read(fd, fatsys->fat, fatsys->bpb.fatlen * fatsys->bpb.bps) == -1)
+        goto EXIT4;
+
+    if (lseek(fatsys->fd, fatsys->rootoff, SEEK_SET) == -1)
+        goto EXIT4;
+
+    if (read(fd, fatsys->rootdir, fatsys->bpb.rootlen * fatsys->bpb.bps) == -1)
+        goto EXIT4;
+
+    return fatsys;
+
+EXIT4:
+    free(fatsys->rootdir);
+EXIT3:
+    free(fatsys->fat);
+EXIT2:
+    close(fd);
+EXIT1:
+    free(fatsys);
+
+    return NULL;
+}
+
+int close_fatsys(FATSYS *fatsys)
+{
+    free(fatsys->fat);
+    if (close(fatsys->fd) == -1)
+        return -1;
+    free(fatsys);
+
+    return 0;
+}
+
+int read_cluster(FATSYS *fatsys, uint32_t clu, void *buf)
+{
+    if (lseek(fatsys->fd, fatsys->dataoff + (clu - 2) * fatsys->clulen, SEEK_SET) == -1)
+        return -1;
+
+    return read(fatsys->fd, buf, fatsys->clulen);
+}
+
+int write_cluster(FATSYS *fatsys, uint32_t clu, const void *buf)
+{
+    if (lseek(fatsys->fd, fatsys->dataoff + (clu - 2) * fatsys->clulen, SEEK_SET) == -1)
+        return -1;
+
+    return write(fatsys->fd, buf, fatsys->clulen);
+}
+
+uint16_t *getclu_chain16(FATSYS *fatsys, uint32_t firstclu, uint16_t *count)
+{
+    uint16_t clu, n;
+    uint16_t *chain, *temp;
+    uint32_t capacity;
+        
+    clu = firstclu;
+    capacity = CHAIN_DEF_CAPACITY;
+    n = 0;
+
+    if ((chain = (uint16_t *)malloc(sizeof(uint16_t) * CHAIN_DEF_CAPACITY)) == NULL)
+        return NULL;
+    do  {
+        chain[n++] = clu;
+        if (n == capacity) {
+            capacity *= 2;
+            if ((temp = realloc(chain, sizeof(uint16_t) * capacity )) == NULL) {
+                free(chain);
+                return NULL;
+            }
+            chain = temp;
+        }
+        clu = *(uint16_t *)(fatsys->fat + clu * 2);
+    } while (clu < 0xFFF8);
+    *count = n;
+
+    return chain;
+}
+
+uint16_t *getclu_chain12(FATSYS *fatsys, uint32_t firstclu, uint16_t *count)
+{
+    uint16_t clu, word, n;
+    uint16_t *chain, *temp;
+    uint32_t capacity;
+        
+    clu = firstclu;
+    capacity = CHAIN_DEF_CAPACITY;
+    n = 0;
+
+    if ((chain = (uint16_t *)malloc(sizeof(uint16_t) * CHAIN_DEF_CAPACITY)) == NULL)
+        return NULL;
+    do  {
+        chain[n++] = clu;
+        if (n == capacity) {
+            capacity *= 2;
+            if ((temp = realloc(chain, sizeof(uint16_t) * capacity )) == NULL) {
+                free(chain);
+                return NULL;
+            }
+            chain = temp;
+        }
+        word = *(uint16_t *)(fatsys->fat + clu * 3 / 2);
+        clu = clu % 2 == 0 ? word & 0x0FFF : word >> 4;
+    } while (clu < 0xFF8);
+    *count = n;
+
+    return chain;
+}
+
+void freeclu_chain(uint16_t *chain)
+{
+    free(chain);
+}
+
+DIR_ENTRY *get_rootents(FATSYS *fatsys, uint16_t *count)
+{
+    DIR_ENTRY *dent, *temp;
+    DIR_ENTRY *dents;
+    uint32_t capacity;
+    uint16_t n;
+    
+    if ((dents = (DIR_ENTRY *)malloc(DIR_ENTRY_SIZE * ROOT_DEF_CAPACITY)) == NULL)
+        return NULL;
+
+    n = 0;
+    capacity = ROOT_DEF_CAPACITY;
+    dent = (DIR_ENTRY *)fatsys->rootdir;
+    for (uint16_t i = 0; i < fatsys->bpb.rootents; ++i) {
+        if (dent[i].name[0] == 0)
+            break;
+        if (dent[i].name[0] == 0xE5 || (dent[i].attr & 0XF) == 0x0F)
+            continue;
+        
+        if (n == capacity) {
+            capacity *= 2;
+            if ((temp = realloc(dents,  DIR_ENTRY_SIZE * capacity )) == NULL) {
+                free(dents);
+                return NULL;
+            }
+            dents = temp;
+        }
+        dents[n++] = dent[i];
+    }
+    *count = n;
+
+     return dents;
+}
+
+/* app.c */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <inttypes.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include "fatsys.h"
+
+void exit_sys(const char *msg);
+
+int main(int argc, char *argv[])
+{
+    FATSYS *fatsys;
+    unsigned char buf[8192];
+    uint16_t count;
+    uint16_t *chain;
+    DIR_ENTRY *dents;
+
+    if (argc != 2) {
+        fprintf(stderr, "wrong number of arguments!..\n");
+        exit(EXIT_FAILURE);
+    }
+
+    if ((fatsys = open_fatsys(argv[1])) == NULL) 
+        exit_sys("open_fatsys");
+
+    if ((dents = get_rootents(fatsys, &count)) == NULL) {
+        fprintf(stderr, "cannot get root entries!..\n");
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i < count; ++i) {
+        for (int k = 0; k < 8; ++k) 
+            if (dents[i].name[k] != ' ')
+                putchar(dents[i].name[k]);
+        
+        if (dents[i].ext[0] != ' ')
+                putchar('.');
+        for (int k = 0; k < 3; ++k) 
+            if (dents[i].ext[k] != ' ')
+                putchar(dents[i].ext[k]);
+
+        putchar('\n');
+    }
+
+    close_fatsys(fatsys);
+    
+    return 0;
+}
+
+void exit_sys(const char *msg)
+{
+    perror(msg);
+
+    exit(EXIT_FAILURE);
+}
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    İşletim sistemi bir dizin dosyası içerisindeki 32'lik girişlerini gözden geçirirken dosya isminin ilk karakterini '\0' 
+    karakter olarak gördüğünde (yani sayısal 0 değeri) işlemini sonlandırmaktadır. Yani dizin dosyası içerisindeki bütün 
+    girişlerin gözden geçirilmesine gerek yoktur. Yukarıda da belirttiğimiz gibi dosya isminin ilk karakteri 0xE5 ise işletim 
+    sistemi bu 32'lik girişi de silinmiş dosya olduğu gerekçesiyle geçmektedir. 
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    İşletim sistemlerinde bir yol ifadesi verildiğinde o yol ifadesinin hedefindeki dosya ya da dizine ilişkin dizin girişinin 
+    elde edilmesine "yol ifadelerinin çözümlenmesi (pathname resolution)" denilmektedir. Yol ifadelerinin çözümlenmesi eğer 
+    yol ifadesi mutlaksa kök dizinden itibaren, göreli ise prosesin çalışma dizininden itibaren yapılmaktadır. Örneğin FAT 
+    dosya sistemine ilişkin "\a\b\c\d.dat" biçiminde bir yol ifadesi verilmiş olsun. Burada hedeflenen "d.dat" dosyasına ilişkin
+    dizin girişi bilgileridir. Ancak bunun için önce kök dizinde "a" girişi, sonra "a" dizininde "b" girişi, sonra "b" dizininde
+    "c" girişi sonra da "c" girişinde "d.dat" girişi bulunmalıdır. Tabii biz burada Windows'taki bir yol ifadesini temel aldık.
+    UNIX/Linux sistemlerinde dosya sistemleri mount edildiği için bu yol ifadesi aslında mount noktasına görelidir. 
+
+    İşletim sistemleri bir yol ifadesini çözümlerken yol ifadesindeki tüm yol bileşenlerine ilişkin dizin giriş bilgilerini de 
+    bir cache sisteminde saklamaktadır. İşletim sistemlerinin oluşturduğu bu cache sistemine "directory entry cache" ya da kısaca
+    "dentry cache" denilmektedir. Örneğin prgramcı aşağıdaki gibi bir yol ifadesi kullanmış olsun:
+
+    "\a\b\c\d.dat"
+
+    İşletim sisteni buaradaki "a", "b", "c" ve "d.dat" dosyaarına ilişkin dizin giriş bilgilerini bir cache sisteminde saklamaktadır. 
+    Böylece benzer yol ifadeleri için hiç disk okuması yapılmadan bu cache sisteminden bu bilgiler elde edilebilmektedir. 
+ ---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+                                                177. Ders 03/11/2024 - Pazar
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Pekiyi FAT dosya sistemi için yol ifadelerini çözen basit yalın bir kodu nasıl yazabiliriz? Bizim bir yol ifadesi verildiğinde
+    o yol ifadesini parse edip oradaki yol bileşenlerini elde edebilmemiz gerekir. Sonra dizinler bir dosya olduğuna göre dizinlere 
+    ilişkin cluster zincirinde diğer bileşenin aranması gerekir. İşlemler böyle devam ettirilir. FAT dosya sistemi için yol 
+    ifadesini çözümleyen bir fonksiyonun parametrik yapısı şöyle olabilir:
+
+    int resolve_path(FATSYS *fatsys, const char *path, DIRECTORY_ENTRY *de);
+
+    Biz mutlak yol ifadelerini çözümleyecek olalım. Her dizinin bir cluster zinciri vardır. Ancak FAT12 ve FAT16 sistemlerinde
+    kök dizinin bir cluster zinciri yoktur. Kök dizinin yeri ve uzunluğu baştan bellidir. 
+---------------------------------------------------------------------------------------------------------------------------*/
+<BURADA KALDIK>
 
 /*--------------------------------------------------------------------------------------------------------------------------
     Linux kernel istenirse kaynak kodlarından yeniden derlenip (yani build edilip) elde edilen yeni kernel ile sistem başlatılabilir. 
