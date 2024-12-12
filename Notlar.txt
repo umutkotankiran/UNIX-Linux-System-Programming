@@ -16078,7 +16078,7 @@ void exit_sys(const char *msg)
     (proses id'sinin 0 olması) gerekir. 
 
     2) MSGMNI (Maximum Number of Id): Bu limit tüm sistemde yaratılcak farklı mesaj kuyruklarının maksimum sayısını belirtmektedir. 
-    Bu sayı /proc/sys/kernel/msgmni dosyasından elde edilebilir. Linux sistemlerinde bunun default değeri şimdilik 32000'dir. 
+    Bu sayı "/proc/sys/kernel/msgmni" dosyasından elde edilebilir. Linux sistemlerinde bunun default değeri şimdilik 32000'dir. 
 
     3) MSGMNB (Maximum Number of Bytes): Bu değer bir mesaj kuyruğundaki mesajın tür değeri dışındaki tüm mesajlarının toplam maximum 
     byte sayısıdır. msgsnd fonksiyonu bu değer aşıldığında blokeli işlemlerde bloke olur. Bu değer /proc/sys/kernel/msgmnb dosyasından 
@@ -16368,7 +16368,6 @@ void exit_sys(const char *msg)
     ya da örneğin:
 
     ipcrm -q 3
-
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
@@ -18376,21 +18375,21 @@ void exit_sys(const char *msg)
 
 /*--------------------------------------------------------------------------------------------------------------------------
     Sanal bellek kullanan işletim sistemlerinde bazı sayfaların lock edilmesine olanak verilebilmektedir. Bir sayfa lock edildiğinde 
-    artık o sayfa fiziksel RAM'de yer açmak için işletim sistemi tarafından "swap out" yapılmamaktadır. Bir sayfanın belleğe lock
-    edilmesinin iki avantajı olabilmektedir:
+    artık o sayfa fiziksel RAM'de yer açmak için işletim sistemi tarafından "swap out" yapılmamaktadır. Bir sayfanın belleğe 
+    lock edilmesinin iki avantajı olabilmektedir:
 
-    1) Bu sayede swap out yapılmayacağı için göreli bir hız kazancı sağlanır. Özellikle gerçek zamanlı uygulamalarda bu tür hız kazançları
-    önemli olabilmektedir. 
+    1) Bu sayede swap out yapılmayacağı için göreli bir hız kazancı sağlanır. Özellikle gerçek zamanlı uygulamalarda bu tür hız 
+    kazançları  önemli olabilmektedir. 
     2) Bu sayede swap dosyalarından bilgi çalmaya çalışan kişiler engellenmiş olur. Tabii swap dosyalarından bilgi çalmak da 
     aslında kolay bir şey değildir. 
 
-    Pekiyi bir proses istediği kadar sanal sayfayı lock edebilir mi? Şüphesiz eğer prosesler istedikleri kadar sanal sayfayı lock edebilselerdi
-    swap işlemleri konusunda dolayısıyla sanal bellek kullanımı konusunda bir baskı oluşurdu. Bu nedenle işletim sistemlerinde 
-    uygun önceliğe sahip olmayan proseslerin lock edebileceği sayfa sayısında bir sınırlama yapılmaktadır. Linux'ta uygun önceliğe 
-    sahip olmayan proseslerin kilitleyebileceği sayfa sayısı RLIMIT_MEMLOCK isimli kaynak limitiyle belirlenmiştir. Bu kaynak 
-    limitinin hem hard hem de soft değeri mevcut Linux çekirdeklerinde 509853696 byte (124476 sayfa) kadardır. Ancak Linux sistemlerinde 
-    "uygun önceliğe sahip olan (appropriate privileges)" prosesler istedikleri kadar sayfayı kilitleyebilmektedir. Yani bu prosesler prosesin 
-    RLIMIT_MEMLOCK limitlerinden etkilenmemektedir. 
+    Pekiyi bir proses istediği kadar sanal sayfayı lock edebilir mi? Şüphesiz eğer prosesler istedikleri kadar sanal sayfayı 
+    lock edebilselerdi swap işlemleri konusunda dolayısıyla sanal bellek kullanımı konusunda bir baskı oluşurdu. Bu nedenle işletim 
+    sistemlerinde uygun önceliğe sahip olmayan proseslerin lock edebileceği sayfa sayısında bir sınırlama yapılmaktadır. Linux'ta 
+    uygun önceliğe sahip olmayan proseslerin kilitleyebileceği sayfa sayısı RLIMIT_MEMLOCK isimli kaynak limitiyle belirlenmiştir. 
+    Bu kaynak limitinin hem hard hem de soft değeri mevcut Linux çekirdeklerinde 509853696 byte (124476 sayfa) kadardır. Ancak 
+    Linux sistemlerinde "uygun önceliğe sahip olan (appropriate privileges)" prosesler istedikleri kadar sayfayı kilitleyebilmektedir. 
+    Yani bu prosesler prosesin RLIMIT_MEMLOCK limitlerinden etkilenmemektedir. 
 
     Sanal sayfaların belleğe lock edilmesi için birkaç fonksiyon kullanılabilmektedir. Bu amaçla kullanılan mlock isimli POSIX 
     fonksiyonunun prototipi şöyledir:
@@ -18402,12 +18401,13 @@ void exit_sys(const char *msg)
     uzunluk da başka bir sayfanın ortalarına kadar gidiyorsa baştaki ve sonraki her iki sayfa lock işlemine dahil edilmektetedir.)
     POSIX standartlarında birinci parametresiyle belirtilen adresin ilgili sistem tarafından sayfa katlarında olmasının zorunlu 
     tutulabileceği (may require) belirtilmiştir. Linux sistemlerinde birinci parametrede belirtilen adresin sayfa katlarında olması 
-    zorunluluğu yoktur. Uzunluk parametresi herhangi bir değerde olabilir. Fonksiyon başarı durumunda 0 değerine, başarısızlık durumunda -1 değerine
-    geri dönmektedir. errno uygun biçimde set edilmektedir. 
+    zorunluluğu yoktur. Uzunluk parametresi herhangi bir değerde olabilir. Fonksiyon başarı durumunda 0 değerine, başarısızlık 
+    durumunda -1 değerine geri dönmektedir. errno uygun biçimde set edilmektedir. 
 
     Bir adres sayfa katlarına şu şekilde align edilebilir:
 
     #include <stdint.h>
+
     void *addr = (void *)((uintptr_t)buf & ~0xFFF);
 
     mlock fonksiyonu ile kilitlenmeye çalışılan sayfalar o anda RAM'de değilse mlock önce onları RAM'e alıp kilitlemektedir. 
@@ -18514,17 +18514,19 @@ void exit_sys(const char *msg)
     Thread'ler 90'lı yıllarda işletim sistemlerine sokulmuştur. Microsoft'un thread'li ilk işletim sistemi Windows NT (1993) 
     ve sonra da Windows 95 (1995) sistemleridir. Benzer biçimde UNIX/Linux dünyasına da thread'ler ilk kez 90'lı yıllarla sokulmuştur. 
     Yani thread'ler daha önce denemeler yapılmış olsa da 90'lı yılların başlarında işletim sistemlerine sokulmuş durumdadır. 
-    Bugün pek çok programlama dili ve framework kendi içerisinde thread'leri barındıran kütüphanelere sahiptir. Hatta yeni dillerin
-    bazıları artık thread'leri anahtar sözcüklerle dilin sentaksına dahil etmektedir. Örneğin C++ Programlama Dili'ne 2011 
-    versiyonuyla (C++11) bir thread kütüphanesi eklenmiştir. Benzer biçimde .NET ve C#'ın ilk sürümlerinde (2002) bile framework 
-    bir thread kütüphanesine sahipti. Benzer biçimde Java Dilininde kütüphanesi içerisinde thread'lerle işlem yapan sınıflar 
-    bulunuyordu. Microsoft'un MFC framework'ü gibi, yaygın kullanılan Qt framework'ü gibi pek çok framework kendi içerisinde 
-    bir thread kütüphanesi barındırmaktadır. Tabii thread işlemleri bir dilin ya da bir framework'ün kontrolü altında olan işlemler 
-    değildir. Doğrudan işletim sisteminin kontrolü altında olan işlemlerdir. Dolayısıyla programlama dilleri ya da framework'ler 
-    işletim sistemlerinin sunduğu mekanizmayı kullanmaktadır. Tabii bu diller ve framework'ler thread kullanımını "platform bağımsız" 
-    hale de getirmektedir. Yani örneğin Windows'un ve Linux'un sağladığı thread mekanizması farklı olmasına karşın C++'ın standart 
-    thread kütüphanesi "platform bağımsız" bir kütüphanedir. Başka bir deyişle C++'ın standart thread kütüphanesi Windows sistemlerinde 
-    "Windows API Fonksiyonları" kullanılarak UNIX/Linux sistemlerinde "POSIX fonksiyonları" kullanılarak gerçekleştirilmiştir. 
+    Bugün pek çok programlama dili ve framework kendi içerisinde thread'leri barındıran kütüphanelere sahiptir. Hatta yeni 
+    dillerin bazıları artık thread'leri anahtar sözcüklerle dilin sentaksına dahil etmektedir. Örneğin C++ Programlama Dili'ne 
+    2011 versiyonuyla (C++11) bir thread kütüphanesi eklenmiştir. Benzer biçimde .NET ve C#'ın ilk sürümlerinde (2002) bile 
+    framework bir thread kütüphanesine sahipti. Benzer biçimde Java Dilininde kütüphanesi içerisinde thread'lerle işlem yapan 
+    sınıflar bulunuyordu. Microsoft'un MFC framework'ü gibi, yaygın kullanılan Qt framework'ü gibi pek çok framework kendi 
+    içerisinde bir thread kütüphanesi barındırmaktadır. Tabii thread işlemleri bir dilin ya da bir framework'ün kontrolü altında 
+    olan işlemler değildir. Doğrudan işletim sisteminin kontrolü altında olan işlemlerdir. Dolayısıyla programlama dilleri 
+    ya da framework'ler işletim sistemlerinin sunduğu mekanizmayı kullanmaktadır. Tabii bu diller ve framework'ler thread 
+    kullanımını "platform bağımsız" hale de getirmektedir. Yani örneğin Windows'un ve Linux'un sağladığı thread mekanizması 
+    farklı olmasına karşın C++'ın standart thread kütüphanesi "platform bağımsız" bir kütüphanedir. Başka bir deyişle C++'ın 
+    standart thread kütüphanesi Windows sistemlerinde "Windows API Fonksiyonları" kullanılarak UNIX/Linux sistemlerinde "POSIX 
+    fonksiyonları" kullanılarak gerçekleştirilmiştir. 
+
     C Programlama Dili'ne de 2011 sürümüyle (C11) birlikte "isteğe bağlı (optional)" mini bir thread kütüphanesi eklenmiştir. 
     Ancak bu mini thread kütüphanesi Microsoft C derleyicisi tarafından ve gcc derleyicileri tarafından desteklenmiyordu. Ancak 
     gcc derleyicilerinin son versiyonları bu thread kütüphanesini desteklemektedir.
@@ -18568,9 +18570,9 @@ void exit_sys(const char *msg)
 
     Buradaki temsili kodda klavyeden bir karakter okunmuş ve o karakter işlenmiştir. Ancak arka planda ekrana bir saat de 
     basılmaktadır. Oysa getchar gibi bir işlemde bloke oluşacağı için ekrandaki saat duracaktır. İşte eskiden bu tür işlemler 
-    oldukça zor biçimde ancak dolaylı olarak gerçekleştiriliyordu. Ancak thread'ler kullanılmaya başlandığında bu tür işlemleri gerçekleştirmek
-    çok kolaylaştı. Thread'ler bağımsız çizelgelendiği için bir thread bloke olduğunda prosesin diğer thread'leri çalışmaya
-    devam etmektedir. Örneğin:
+    oldukça zor biçimde ancak dolaylı olarak gerçekleştiriliyordu. Ancak thread'ler kullanılmaya başlandığında bu tür işlemleri 
+    gerçekleştirmek çok kolaylaştı. Thread'ler bağımsız çizelgelendiği için bir thread bloke olduğunda prosesin diğer thread'leri 
+    çalışmaya devam etmektedir. Örneğin:
 
     Ana thread:
 
@@ -18588,14 +18590,14 @@ void exit_sys(const char *msg)
     2) Thread'ler bir işi hızlandırmak için sıkça kullanılmaktadır. Bir işin tek bir akışa yaptırılmasıyla birden fazla akışa 
     yaptırılması arasında önemli bir hız farkı olabilmektedir. Örneğin bir satranç programında thread'lerden biri mümkün hamleleri 
     tespit ederken diğer bir thread bu hamleleri analiz ediyor olabilir. Tek bir CPU'nun bulunduğu durumda da thread'ler prosesin 
-    toplam CPU zamanının artırılmasını sağlayabilmektedir. (Örneğin tek bir işlemci bulunuyor olsun. Bizim dışımızda sistemde 10 thread 
-    çalışıyor olsun. Biz prosesimizde tek thread oluşturursak (default durum) 1 / 11 CPU zamanı elde ederiz. İki thread oluştursak 
-    2 / 12 CPU zamanı elde ederiz. Üç thread oluştursak 3 / 13 CPU zamanı elde ederiz. Bir kesrin pay ve paydasına aynı sayı eklendiğinde 
-    kesrin büyüdüğüne dikkat ediniz.)
+    toplam CPU zamanının artırılmasını sağlayabilmektedir. (Örneğin tek bir işlemci bulunuyor olsun. Bizim dışımızda sistemde 10 
+    thread çalışıyor olsun. Biz prosesimizde tek thread oluşturursak (default durum) 1 / 11 CPU zamanı elde ederiz. İki thread 
+    oluştursak 2 / 12 CPU zamanı elde ederiz. Üç thread oluştursak 3 / 13 CPU zamanı elde ederiz. Bir kesrin pay ve paydasına 
+    aynı sayı eklendiğinde kesrin büyüdüğüne dikkat ediniz.)
 
     3) Bir programın çeşitli parçalarının çok işlemcili ya da çok çekirdekli makinelerde eş zamanlı biçimde çalıştırılmasına
-    "paralel programlama" denilmektedir. Paralel programlama yapabilmek için programcının thread'leri kullanması ve thread'leri farklı 
-    işlemcilere ya da çekirdeklere ataması gerekmektedir.
+    "paralel programlama" denilmektedir. Paralel programlama yapabilmek için programcının thread'leri kullanması ve thread'leri 
+    farklı işlemcilere ya da çekirdeklere ataması gerekmektedir.
 
     4) Thread'ler bazı durumlarda mutlak zorunlu olmasa da tasarımı kolaylaştırmak için ve sistemi ölçeklenebilir (scalable) 
     hale getirmek için kullanılabilmektedir.
@@ -68955,16 +68957,18 @@ void exit_sys(const char *msg)
 
     Bir blok grup betimleyicisinin alanları şöyledir:
 
-    | Eleman                | Açıklama                                                                                Boyut
-    |------------------------|-------------------------------------------------------------------------------------|---------|
-    | bg_inode_bitmap        | Blok bitmap'in bulunduğu blok numarası                                              | 4 Bayt  |
-    | bg_free_blocks_count   | Blok bitmap'in bulunduğu blok numarası                                              | 4 Bayt  |
-    | bg_inode_table         | Blok bitmap'in bulunduğu blok numarası                                              | 4 Bayt  |
-    | bg_free_blocks_count   | Blok grubunda kullanılmayan veri bloklarının sayısını belirtir.                     | 2 Bayt  |
-    | bg_free_inodes_count   | Blok grubunda kullanılmayan inode'ların sayısını belirtir.                          | 2 Bayt  |
-    | bg_used_dirs_count     | Blok grubunda bulunan kullanılan dizinlerin sayısını belirtir.                      | 2 Bayt  |
-    | bg_pad                 | Padding                                                                             | 2 Bayt  |
-    | bg_reserved            | Yapıların hizalanabilmesi için ayrılmış boş alan. Genellikle sıfırlarla doldurulur. | 12 Bayt |
+    +----------------------------+---------------------------+--------------------------------------+
+    | Yapı Elemanı               | Boyut (Byte)              | Açıklama                             |
+    +----------------------------+---------------------------+--------------------------------------+
+    | bg_block_bitmap            | 4                         | Blok haritasının başlangıç adresi    |
+    | bg_inode_bitmap            | 4                         | İnode haritasının başlangıç adresi   |
+    | bg_inode_table             | 4                         | İnode tablosunun başlangıç adresi    |
+    | bg_free_blocks_count       | 2                         | Blok grubunda serbest blok sayısı    |
+    | bg_free_inodes_count       | 2                         | Blok grubunda serbest inode sayısı   |
+    | bg_used_dirs_count         | 2                         | Blok grubundaki kullanılan dizin sayısı |
+    | bg_flags                   | 2                         | Blok grubunun bayrakları (flags)     |
+    | bg_reserved                | 12                        | Rezerv alan (genellikle sıfırdır)    |
+    +----------------------------+---------------------------+--------------------------------------+
 
     Blok grup betimleyicisi toplamda 32 byte yer kaplamaktadır. Her blok grubunda blok bitmap'in, i-node bitmap'in ve i-node 
     tablosunun yerinin blok numarası tutulmaktadır. Buradaki blok uzunlukları disk bölümünün başından itibaren yer belirtir.
@@ -69086,8 +69090,8 @@ void exit_sys(const char *msg)
     erişebilirsiniz. 
 
     i-node tablosundaki ilk n tane i-node elemanı reserved biçimde tutulmaktadır. Bunaların sayısı süper bloktaki s_first_ino 
-    elemanında belirtilmektedir. Üzerinde çalıştığımız dosya sisteminde bu değer 11'dir. Yani ilk 10 i-node elemanı reserve
-    edilmiştir. İlk i-node elemanının numarası 11'dir. Örnek dosya sistemimizdeki durum şöyleri:
+    elemanında belirtilmektedir. Üzerinde çalıştığımız dosya sisteminde s_first_ino değeri 11'dir. Yani ilk 10 i-node elemanı 
+    reserve edilmiştir. İlk i-node elemanının numarası 11'dir. Örnek dosya sistemimizdeki durum şöyledir:
 
     0. Blok Grubunun i-node Tablosu
 
@@ -69098,6 +69102,15 @@ void exit_sys(const char *msg)
     <10 numaralı i-node elemanı> 
     <11 numaralı i-node elemanı (ilk reserved olmaayan eleman)>
     ...
+
+    Reserve edilmiş ilk i-node elemanlarının anlamları şöyledir:
+
+    XT2_BAD_INO	            1	bad blocks inode
+    EXT2_ROOT_INO	        2	root directory inode
+    EXT2_ACL_IDX_INO	    3	ACL index inode (deprecated?)
+    EXT2_ACL_DATA_INO	    4	ACL data inode (deprecated?)
+    EXT2_BOOT_LOADER_INO	5	boot loader inode
+    EXT2_UNDEL_DIR_INO	    6	undelete directory inode
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
@@ -69106,15 +69119,16 @@ void exit_sys(const char *msg)
 
 /*--------------------------------------------------------------------------------------------------------------------------
     Peekiyi ext2 dosya sisteminde bir dosyanın parçalarının (yani bloklarının) nerelerde olduğu bilgisi nerede tutulmaktadır?
-    Anımsanacağı gibi FAT dosya sisteminde dosyanın parçalarının (orada block yerine cluster teerminin kullanıldığını anımsayınız)
+    Anımsanacağı gibi FAT dosya sisteminde dosyanın parçalarının (orada block yerine cluster terminin kullanıldığını anımsayınız)
     diskin hangi cluster'larında olduğu FAT bölümünde saklanıyordu. İşte yalnızca ext2 dosya sisteminde değil i-node tabanlı 
-    dosya sistemlerinde bir dosyanın diskte hangi bloklarda bulunduğu i-node eelemanın içerisinde tutulmaktadır.i-node elemanlarının
+    dosya sistemlerinde bir dosyanın diskte hangi bloklarda bulunduğu i-node elemanın içerisinde tutulmaktadır.i-node elemanlarının
     genel olarak 1228 byte ya da 256 byte uzunlukta olduğunu anımsayınız. Büyük bir dosyanın blok numaralarının bu kadar alana 
     sığmayacağı açıktır. PPekiyi o zaman dosyanın blok numaraları i-node elemanında nasıl tutulmaktadır?
 
     İşte i-node elemanında dosyanın hangi bloklerda olduğu "doğrudan (direct)", "dolaylı (indriect)", "çift dolaylı (double 
-    indirect)" ve "üç dolaylı (triple indirect)"" bloklarda tutulmaktadır. i-node elemanının demimal 40'ncı offset'inde
-    (i-node elemanın "i_block" isimli elemanında) 15 elemanlık her biri DWORD değerlerden oluşan bir dizi vardır. Bu diziyi şöyle gösterebiliriz:
+    indirect)" ve "üç dolaylı (triple indirect)"" bloklarda tutulmaktadır. i-node elemanının demimal 40'ncı offset'inde (i-node 
+    elemanın 0x28 offset'indek, "i_blocks" isimli elemanında) 15 elemanlık her biri DWORD değerlerden oluşan bir dizi vardır. 
+    Bu diziyi şöyle gösterebiliriz:
 
     0 <dosyanın 0'ıncı bloğunun numarası> 
     1 <dosyanın 1'inci bloğunun numarası> 
@@ -69140,15 +69154,60 @@ void exit_sys(const char *msg)
     numarası olabilir. 12 blok numarası doğrudan olduğuna göre dolaylı blokla toplam dosyanın 1024 + 12 = 1036 tane bloğunun 
     yeri tutulmuş olacaktır. Pekiyi ya bu sistemde dosya 1026 bloktan daha büyükse? İşte bu durumda çift dolaylı blok numarasına 
     başvurulmaktadır. Çift dolaylı blok numarasına ilişkin bloğa gidildiğinde oradaki blok numaraları dosyanın blok numaraları 
-    değil dosyanın blok numaralarının turulduğu blok numaralarıdır.
+    değil dosyanın blok numaralarının turulduğu blok numaralarıdır. Eğer dosya çift dolaylı bloklara sığmıyorsa üç dolaylı 
+    bloğa başvurulmaktadır. Üç dolaylı blokta belirtilen blok numarasında çift dolaylı blokların numaraları vardır. Çift dolaylı
+    blokların içerisinde dolaylı blokların numaraları vardır. Nihayet dolaylı blokların içerisinde de asıl blokların numaraları 
+    vardır. 
 
-    <BURADA KALDIK>
+    Pekiyi her bloğun 4K uzunluğunda olduğu bir sistemde bir dosyanın i-node elemanında belirtilen maksimum uzunluğu ne olabilir? 
+    İşte bu uzunluk aşağıdaki değerlerin toplamıyla elde edilebilir:
+
+    12 tane doğrudan blok = 12 * 4096
+    1 tane dolaylı blok = 1024 * 4096
+    1 tane çift dolaylı blok = 1024 * 1024 * 4096
+    1 tane üç dolaylı blok = 1024 * 1024 * 1024 * 4096
+
+    Toplam = 12 * 4096 + 1024 * 4096 + 1024 * 12024 * 4096 + 1024 * 1024 * 1024 * 4096 = 4448483065856 = 4 TB civarı.
+
+    Şimdi aşağıdaki i-node elemanına bakıp dosya bloklarının yerlerini tespit edelim:
+
+    00010b00  a4 81 00 00 c8 79 00 00  87 5c 2e 67 87 5c 2e 67  |.....y...\.g.\.g|
+    00010b10  87 5c 2e 67 00 00 00 00  00 00 01 00 40 00 00 00  |.\.g........@...|
+    00010b20  00 00 00 00 01 00 00 00  00 08 00 00 01 08 00 00  |................|
+    00010b30  02 08 00 00 03 08 00 00  04 08 00 00 05 08 00 00  |................|
+    00010b40  06 08 00 00 07 08 00 00  00 00 00 00 00 00 00 00  |................|
+    00010b50  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    00010b60  00 00 00 00 2e db 09 7c  00 00 00 00 00 00 00 00  |.......|........|
+    00010b70  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    00010b80  20 00 00 00 c8 76 3d ba  c8 76 3d ba c8 76 3d ba  | ....v=..v=..v=.|
+    00010b90  87 5c 2e 67 c8 76 3d ba  00 00 00 00 00 00 00 00  |.\.g.v=.........|
+    00010ba0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    00010bb0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    00010bc0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    00010bd0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    00010be0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    00010bf0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+
+    Burada dosyanın tüm blokları 0x28'inci offset'teki doğrudan bloklarda belirtilmektedir:
+
+    00 08 00 00  => 0x800
+    01 08 00 00  => 0x801
+    02 08 00 00  => 0x802
+    03 08 00 00  => 0x803
+    04 08 00 00  => 0x804
+    05 08 00 00  => 0x805
+    06 08 00 00  => 0x806
+    07 08 00 00  => 0x807
+
+    Dosya 0x4 offset'inde belirtilen 0x79C8 = 31176 byte uzunluğundadır. Bu sistemde bir blok 4K olduğuna göre toplam dosyanın
+    parçalarının 8 blok olması gerekmektedir. İşte burada söz konusu dosyanın blokları disk bölümünün başından itibaren 
+    0x800, 0x801, 0x802, 0x803, 0x804, 0x805, 0x806 ve 0x807'inci bloklardadır. Söz konusu sistemde bir blok 4096 byte 
+    olduğuna göre dosyanın ilk bloğunun offset numarası 0x800 * 0x1000 = 0x800000 biçimindedir. 
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
-
+                                            183. Ders  01/12/2024 - Pazar
 ---------------------------------------------------------------------------------------------------------------------------*/
-
 
 /*--------------------------------------------------------------------------------------------------------------------------
     Şimdi de ext2 dosya sisteminde dizin organizasyonu üzerinde duralım. Tıpkı FAT dosya sistemlerinde olduğu gibi ext2 
@@ -69165,7 +69224,7 @@ void exit_sys(const char *msg)
     
     Bir dizin girişin format şöyledir:
 
-    Offset (bytes)        Size (bytes)        Açıklama
+    Offset (bytes)        Size (bytes)         Açıklama
     0                       DWORD           inode numarası
     4                       WORD            girişin toplam uzunluğu
     6                       BYTE            dosya isminin uzunluğu
@@ -69202,7 +69261,480 @@ void exit_sys(const char *msg)
     EXT2_FT_FIFO	    5	            Buffer File
     EXT2_FT_SOCK	    6	            Socket File
     EXT2_FT_SYMLINK	    7	            Symbolic Link
+---------------------------------------------------------------------------------------------------------------------------*/
 
+/*--------------------------------------------------------------------------------------------------------------------------
+                                        184. Ders 06/12/2024 - Cuma
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Pekiyi ext2 dosya sisteminde işletim sistemi bit yol ifadesini nasıl çzöümlemektedir* Örneğin "/a/b/c.txt" gibi bir yol
+    ifadesinde "c.txt" dosyasının i-node elemanına naısl erişmektedir? İşte kök dizin dosyasının bilgileri 2 numaralı i-node 
+    elemanındadır. İşletim sistemi önce kök dizinin i-node elemanını elde eder. Oradan kök dizinin bloklarına erişir. O bloklar 
+    içerisinde ilgili girişi arar. İşlemlerini bu biçimde devam ettirir. Örneğin "/a/b/c.txt" dosyasının i-node elemanına 
+    erişmek için öncek kök dizinde "a" girişini arar. Sonra "a" girişin dizin olduğunu doğrular. Sonra "a" dizininde "b" 
+    girişini arar. "b" girişinin de dosya olduğunu doğrular. Sonra "b" girişinin içerisinde "c.txt" arar ve hedef dosyanın 
+    i-node bilgilerine erişir. 
+
+    Şimdi adım adım elimizdeki disk bölümünde "/a/b/c.txt" dosyasının yerini bulmaya çalışalım. Tabii buradaki kök dizin 
+    aslında mount edilmiş dosya sisteminin köküdür Biz bu dosya sistemini kursumuzda aşağıdaki noktaya mount ettik:
+    
+    "/home/kaan/Study/UnixLinux-SysProg/DiskIO-FileSystems"
+
+    Kök dizinin i-node elemanı (2 numaralı i-node elemanı) aşağıda verilmiştir:
+
+    00010100  ed 41 00 00 00 10 00 00  a8 69 4c 67 a7 69 4c 67  |.A.......iLg.iLg|
+    00010110  a7 69 4c 67 00 00 00 00  00 00 04 00 08 00 00 00  |.iLg............|
+    00010120  00 00 00 00 04 00 00 00  2b 06 00 00 00 00 00 00  |........+.......|
+    00010130  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    00010140  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    00010150  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    00010160  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    00010170  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    00010180  20 00 00 00 a0 15 ed 2d  a0 15 ed 2d 1c 7e f4 e6  | ......-...-.~..|
+    00010190  42 5c 2e 67 00 00 00 00  00 00 00 00 00 00 00 00  |B\.g............|
+    000101a0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    000101b0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    000101c0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    000101d0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    000101e0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    000101f0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+
+    Burada 0x28'inci offsetteki i_blocks elemanın yalnızca ilkinin dolu olduğunu görüyoruz. Demek ki kök dizin tek bir 
+    bloktan oluşmaktadır. Kök dizinin blok numarası 0x62B'dir. Şimdi 0x62b bloğunun offset'ini hesaplayalım. Bunun için 
+    bu değeri 0x1000 (4096) ile çarpmamız gerekir:
+
+    0x62B * 0x1000 = 0x62B000 (6467584)
+
+    Diskin bu offset'indeki değerler şöyledir:
+
+    0062b000  02 00 00 00 0c 00 01 02  2e 00 00 00 02 00 00 00  |................|
+    0062b010  0c 00 02 02 2e 2e 00 00  0b 00 00 00 14 00 0a 02  |................|
+    0062b020  6c 6f 73 74 2b 66 6f 75  6e 64 00 00 0c 00 00 00  |lost+found......|
+    0062b030  10 00 07 01 73 74 64 69  6f 2e 68 00 b2 61 00 00  |....stdio.h..a..|
+    0062b040  c4 0f 01 02 61 00 00 00  00 00 00 00 00 00 00 00  |....a...........|
+    0062b050  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0062b060  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0062b070  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0062b080  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0062b090  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0062b0a0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0062b0b0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+
+    Buradaki dizin girişlerini çözelim. Dizin giriş formatını aşağıda yeniden veriyoruz:
+
+    Offset (bytes)        Size (bytes)         Açıklama
+    0                       DWORD           inode numarası
+    4                       WORD            girişin toplam uzunluğu
+    6                       BYTE            dosya isminin uzunluğu
+    7                       BYTE            dosyanın türü
+    8                       0-255 Bytes     dosya ismi
+    
+    İlk dizin girişinin i-node numarası 2'dir. Bu girişin uzunluğu 0x0C = 12'dir. O halde
+    bu dizin girişi şöyledir:
+
+    0062b000  02 00 00 00 0c 00 01 02  2e 00 00 00 02
+
+    Burada dosya ismi 1 karakter uzunluktadır. Dosya ismi yalnızca 0x2E karakterinde oluşmaktadır. Bu karalter de "." karakteridir.
+    Sonraki dizin girişinin i-node numarası yine 2'dir. Girişin uzunluğu yine 0xC = 12'dir. O halde giriş şöyledir:
+
+    0062b000                                       02 00 00 00  |................|
+    0062b010  0c 00 02 02 2e 2e 00 00                           |................|   
+
+    Buradaki dosya uzunlupunun 2 olduğu görülmektedir. Dosya ismi de 0x2E 0x2E karakterinden oluşmaktadır. Bu da ".." ismidir. 
+    Her dizinin ilk iki elemanının bu biçimde olduğunu anımsayınız. Sonraki giriş ise şöyledir:
+
+    0062b010                           0b 00 00 00 14 00 0a 02  |................|
+    0062b020  6c 6f 73 74 2b 66 6f 75  6e 64 00 00              |lost+found......|
+
+    Burada dosya i-node numarası 0x0b = 11'dir. Dizin girişimin uzunluğu 0x14 = 20'dir. Dosya isminin uzunluğu 0xA = 10'dur. 
+    Dosya ismi "lost+found" biçimindedir. Sonraki giriş ise şöyledir:
+
+    0062b020                                       0c 00 00 00  |lost+found......|
+    0062b030  10 00 07 01 73 74 64 69  6f 2e 68 00              |....stdio.h..a..|
+
+    Buaraki girişin i-node numarası 0xC = 12'dir. Girişin toplam uzunluğu 0x10 = 16'dır. Dosyanın isminin uzunluğu 7'dir. 
+    Dosya ismi "stdio.h" biçimindedir. Sonraki giriş ise şöyledir:
+
+    0062b030                                       b2 61 00 00  |....stdio.h..a..|
+    0062b040  c4 0f 01 02 61 00 00 00  00 00 00 00 00 00 00 00  |....a...........|
+
+    Burada dosyanın i-node numarası 0x61B2 = 25010'dur. Girişin uzunlu 0xC4 = 196'dır. (Bu değerin çok uzun olması önemli değildir. 
+    Çünkü bu dizindeki son dosyadır.) Dosya isminin uzunluğu 1'dir. Doısya türü 0x02'dir. Yani bu giriş bir dizin belirtmektedir 
+    Dos ismi "a" biçimindedir. 
+    
+    İşte işletim sistemi 0x61B2 = 25010'inci i-node elemanında bu dizinin bilgilerinin olduğunu tespit eder ve o i-node elemanını
+    okur. Bu i-node elemanı aşağıdaki gibidir:
+
+    08010100  ed 41 00 00 00 10 00 00  f8 2b 53 67 a7 69 4c 67  |.A.......+Sg.iLg|
+    08010110  a7 69 4c 67 00 00 00 00  00 00 03 00 08 00 00 00  |.iLg............|
+    08010120  00 00 00 00 02 00 00 00  2b 86 00 00 00 00 00 00  |........+.......|
+    08010130  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    08010140  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    08010150  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    08010160  00 00 00 00 f9 65 fb 3c  00 00 00 00 00 00 00 00  |.....e.<........|
+    08010170  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    08010180  20 00 00 00 a0 15 ed 2d  a0 15 ed 2d 04 7d e1 7b  | ......-...-.}.{|
+    08010190  a7 69 4c 67 a0 15 ed 2d  00 00 00 00 00 00 00 00  |.iLg...-........|
+    080101a0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    080101b0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    080101c0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    080101d0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    080101e0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    080101f0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+
+    "a" dizinine ilişkin i-node elemanının 0x28'inci offset'teki blokları bir tanedir ve blok numarası 0x862B = 34547'dir. 
+    Bu bloğun offseti'de 34547 * 4096 = 140685312'dir. Dizine ilişkin dizin bloğunun içeriği şöyledir:
+
+    0862b000  b2 61 00 00 0c 00 01 02  2e 00 00 00 02 00 00 00  |.a..............|
+    0862b010  0c 00 02 02 2e 2e 00 00  b3 61 00 00 e8 0f 01 02  |.........a......|
+    0862b020  62 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |b...............|
+    0862b030  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0862b040  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0862b050  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0862b060  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0862b070  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0862b080  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0862b090  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0862b0a0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+
+    Bu dizin girişlerine bakıldığında "b" isimli girişin bulunduğu görülmektedir. İşte yol ifadesi bu aşamalardan geçilerek 
+    çözümlenmektedir. 
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Pekiyi bir dosya oluşturulurken boş bloklar nasıl tespit edilmektedir? İşte her blok grup betimleyicisi kendi blok grubundaki 
+    boş blokları "block bitmap" denilen tabloda bit düzeyinde tutmaktadır. Blok bitmap tablosu her biti bir bloğun boş mu dolu 
+    mu olduğunu tutmaktadır. Blok grup betimleyicisinde yalnızca blok grubunun yeri tutulur. Bunun blok uzunluğu ilgili blok
+    gruplarındaki blok sayısına bakılarak tespit edilmelidir. Her blok grubunda eşit sayıda blok bulunur. Bu sayı süper blok
+    içerisindeki s_blocks_per_group elemanında saklanmaktadır. Aşağıda bir grup betimleyicisinin blok bitmap tablosunun bir 
+    bölümünü görüyorsunuz:
+
+    0000e000  ff ff ff ff ff ff ff ff  ff ff ff ff ff ff ff ff  |................|
+    0000e010  ff ff ff ff ff ff ff ff  ff ff ff ff ff ff ff ff  |................|
+    0000e020  ff ff ff ff ff ff ff ff  ff ff ff ff ff ff ff ff  |................|
+    0000e030  ff ff ff ff ff ff ff ff  ff ff ff ff ff ff ff ff  |................|
+    0000e040  ff ff ff ff ff ff ff ff  ff ff ff ff ff ff ff ff  |................|
+    0000e050  ff ff ff ff ff ff ff ff  ff ff ff ff ff ff ff ff  |................|
+    0000e060  ff ff ff ff ff ff ff ff  ff ff ff ff ff ff ff ff  |................|
+    0000e070  ff ff ff ff ff ff ff ff  ff ff ff ff ff ff ff ff  |................|
+    0000e080  ff ff ff ff ff ff ff ff  ff ff ff ff ff ff ff ff  |................|
+    0000e090  ff ff ff ff ff ff ff ff  ff ff ff ff ff ff ff ff  |................|
+    0000e0a0  ff ff ff ff ff ff ff ff  ff ff ff ff ff ff ff ff  |................|
+    0000e0b0  ff ff ff ff ff ff ff ff  ff ff ff ff ff ff ff ff  |................|
+    0000e0c0  ff ff ff ff ff ff 01 00  00 00 00 00 00 00 00 00  |................|
+    0000e0d0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0000e0e0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0000e0f0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0000e100  ff 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+
+    Buradaki FF byte'larına dikkat ediniz. FF byte'ı aslında ikilik sistemde 1111 1111 bitlerine karşılık gelmektedir. Yani
+    bu bloklar tamamen tahsis edilmiştir. 00 olan byte'lara ilişkin bloklar tahsis edilmemiş durumdadır. 
+
+    I-node elemanlarının tahsis edilip edilmediğine yönelik de benzer bir tablo tutulmaktadır. Buna "i-node bitmap" tablosu 
+    denilmektedir. Herr blok grubunda bir i-node bitmap tablosu bulunur. Bu tablo da bitlerden oluşmaktadır. Her bit ilgili 
+    i-node elemanın boş mu dolu mu olduğunu bvelirtir. I-node bitmap tablosunun yeri de yine blok grup betimleyicinde tutulmaktadır.
+    Bu tablonun uzunluğu da yine süper bloktaki "bir grup bloğundaki i-node elemanlarının sayısı" dikkate alınarak tespit 
+    edilmektedir. Aşağıda örnek bir i-node bitmap talosunun bir kısmını görüyorsunuz:
+
+    0000f000  ff 0f 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0000f010  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0000f020  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0000f030  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0000f040  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0000f050  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0000f060  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0000f070  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+    0000f080  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+
+    Bu blok grubunda toplam 12 i-node elemanı tahsis edilmiş durumdadır. 
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Biz yukarıdaki örneklerde dosya sistemini tanıyabilmek için manuel işlemler yaptık. Pekiyi bu işlemleri prgramlama yoluyla 
+    nasıl yapabiliriz? Yukarıda eçıkladığımız dosya sistemi alanlarına ilişkin yapılar çeşitli kütüphanelerin içerisinde hazır
+    bir biçimde bulunmaktadır. Örneğin "libext2fs" kütüphanesi kurulduğunda <extfs/ext2_fs.h> dosyasında tüm yapı bildirimleri
+    bulunacaktır. Kütüphanenin kurulumunu şöyle yapabilrisiniz:
+
+    $ sudo apt-get install libext2fs-dev
+
+    Aslında bu kütüphane ve ve <extfs/ext2_fs.h> başlık dosyası yalnızca ext2 dosya sistemine ilişkin değil ext2 ve ext4 dosya 
+    sistemine ilişkin de yapıları ve fonksiyonları bulundurmaktadır. 
+
+    Örneğin <extfs/ext2_fs.h> başlık dosyası içerisindeki süper blok yapısı aşağıdaki gibi bildirilmiştir:
+
+    struct ext2_super_block {
+        /*000*/	__u32	s_inodes_count;		/* Inodes count */
+            __u32	s_blocks_count;		/* Blocks count */
+            __u32	s_r_blocks_count;	/* Reserved blocks count */
+            __u32	s_free_blocks_count;	/* Free blocks count */
+        /*010*/	__u32	s_free_inodes_count;	/* Free inodes count */
+            __u32	s_first_data_block;	/* First Data Block */
+            __u32	s_log_block_size;	/* Block size */
+            __u32	s_log_cluster_size;	/* Allocation cluster size */
+        /*020*/	__u32	s_blocks_per_group;	/* # Blocks per group */
+            __u32	s_clusters_per_group;	/* # Fragments per group */
+            __u32	s_inodes_per_group;	/* # Inodes per group */
+            __u32	s_mtime;		/* Mount time */
+        /*030*/	__u32	s_wtime;		/* Write time */
+            __u16	s_mnt_count;		/* Mount count */
+            __s16	s_max_mnt_count;	/* Maximal mount count */
+            __u16	s_magic;		/* Magic signature */
+            __u16	s_state;		/* File system state */
+            __u16	s_errors;		/* Behaviour when detecting errors */
+            __u16	s_minor_rev_level;	/* minor revision level */
+        /*040*/	__u32	s_lastcheck;		/* time of last check */
+            __u32	s_checkinterval;	/* max. time between checks */
+            __u32	s_creator_os;		/* OS */
+            __u32	s_rev_level;		/* Revision level */
+        /*050*/	__u16	s_def_resuid;		/* Default uid for reserved blocks */
+            __u16	s_def_resgid;		/* Default gid for reserved blocks */
+            /*
+            * These fields are for EXT2_DYNAMIC_REV superblocks only.
+            *
+            * Note: the difference between the compatible feature set and
+            * the incompatible feature set is that if there is a bit set
+            * in the incompatible feature set that the kernel doesn't
+            * know about, it should refuse to mount the filesystem.
+            *
+            * e2fsck's requirements are more strict; if it doesn't know
+            * about a feature in either the compatible or incompatible
+            * feature set, it must abort and not try to meddle with
+            * things it doesn't understand...
+            */
+            __u32	s_first_ino;		/* First non-reserved inode */
+            __u16   s_inode_size;		/* size of inode structure */
+            __u16	s_block_group_nr;	/* block group # of this superblock */
+            __u32	s_feature_compat;	/* compatible feature set */
+        /*060*/	__u32	s_feature_incompat;	/* incompatible feature set */
+            __u32	s_feature_ro_compat;	/* readonly-compatible feature set */
+        /*068*/	__u8	s_uuid[16] __nonstring;		/* 128-bit uuid for volume */
+        /*078*/	__u8	s_volume_name[EXT2_LABEL_LEN] __nonstring;	/* volume name, no NUL? */
+        /*088*/	__u8	s_last_mounted[64] __nonstring;	/* directory last mounted on, no NUL? */
+        /*0c8*/	__u32	s_algorithm_usage_bitmap; /* For compression */
+            /*
+            * Performance hints.  Directory preallocation should only
+            * happen if the EXT2_FEATURE_COMPAT_DIR_PREALLOC flag is on.
+            */
+            __u8	s_prealloc_blocks;	/* Nr of blocks to try to preallocate*/
+            __u8	s_prealloc_dir_blocks;	/* Nr to preallocate for dirs */
+            __u16	s_reserved_gdt_blocks;	/* Per group table for online growth */
+            /*
+            * Journaling support valid if EXT2_FEATURE_COMPAT_HAS_JOURNAL set.
+            */
+        /*0d0*/	__u8	s_journal_uuid[16] __nonstring;	/* uuid of journal superblock */
+        /*0e0*/	__u32	s_journal_inum;		/* inode number of journal file */
+            __u32	s_journal_dev;		/* device number of journal file */
+            __u32	s_last_orphan;		/* start of list of inodes to delete */
+        /*0ec*/	__u32	s_hash_seed[4];		/* HTREE hash seed */
+        /*0fc*/	__u8	s_def_hash_version;	/* Default hash version to use */
+            __u8	s_jnl_backup_type;	/* Default type of journal backup */
+            __u16	s_desc_size;		/* Group desc. size: INCOMPAT_64BIT */
+        /*100*/	__u32	s_default_mount_opts;	/* default EXT2_MOUNT_* flags used */
+            __u32	s_first_meta_bg;	/* First metablock group */
+            __u32	s_mkfs_time;		/* When the filesystem was created */
+        /*10c*/	__u32	s_jnl_blocks[17];	/* Backup of the journal inode */
+        /*150*/	__u32	s_blocks_count_hi;	/* Blocks count high 32bits */
+            __u32	s_r_blocks_count_hi;	/* Reserved blocks count high 32 bits*/
+            __u32	s_free_blocks_hi;	/* Free blocks count */
+            __u16	s_min_extra_isize;	/* All inodes have at least # bytes */
+            __u16	s_want_extra_isize;	/* New inodes should reserve # bytes */
+        /*160*/	__u32	s_flags;		/* Miscellaneous flags */
+            __u16	s_raid_stride;		/* RAID stride in blocks */
+            __u16	s_mmp_update_interval;  /* # seconds to wait in MMP checking */
+            __u64	s_mmp_block;		/* Block for multi-mount protection */
+        /*170*/	__u32	s_raid_stripe_width;	/* blocks on all data disks (N*stride)*/
+            __u8	s_log_groups_per_flex;	/* FLEX_BG group size */
+            __u8	s_checksum_type;	/* metadata checksum algorithm */
+            __u8	s_encryption_level;	/* versioning level for encryption */
+            __u8	s_reserved_pad;		/* Padding to next 32bits */
+            __u64	s_kbytes_written;	/* nr of lifetime kilobytes written */
+        /*180*/	__u32	s_snapshot_inum;	/* Inode number of active snapshot */
+            __u32	s_snapshot_id;		/* sequential ID of active snapshot */
+            __u64	s_snapshot_r_blocks_count; /* active snapshot reserved blocks */
+        /*190*/	__u32	s_snapshot_list;	/* inode number of disk snapshot list */
+        #define EXT4_S_ERR_START ext4_offsetof(struct ext2_super_block, s_error_count)
+            __u32	s_error_count;		/* number of fs errors */
+            __u32	s_first_error_time;	/* first time an error happened */
+            __u32	s_first_error_ino;	/* inode involved in first error */
+        /*1a0*/	__u64	s_first_error_block;	/* block involved in first error */
+            __u8	s_first_error_func[32] __nonstring;	/* function where error hit, no NUL? */
+        /*1c8*/	__u32	s_first_error_line;	/* line number where error happened */
+            __u32	s_last_error_time;	/* most recent time of an error */
+        /*1d0*/	__u32	s_last_error_ino;	/* inode involved in last error */
+            __u32	s_last_error_line;	/* line number where error happened */
+            __u64	s_last_error_block;	/* block involved of last error */
+        /*1e0*/	__u8	s_last_error_func[32] __nonstring;	/* function where error hit, no NUL? */
+        #define EXT4_S_ERR_END ext4_offsetof(struct ext2_super_block, s_mount_opts)
+        /*200*/	__u8	s_mount_opts[64] __nonstring;	/* default mount options, no NUL? */
+        /*240*/	__u32	s_usr_quota_inum;	/* inode number of user quota file */
+            __u32	s_grp_quota_inum;	/* inode number of group quota file */
+            __u32	s_overhead_clusters;	/* overhead blocks/clusters in fs */
+        /*24c*/	__u32	s_backup_bgs[2];	/* If sparse_super2 enabled */
+        /*254*/	__u8	s_encrypt_algos[4];	/* Encryption algorithms in use  */
+        /*258*/	__u8	s_encrypt_pw_salt[16];	/* Salt used for string2key algorithm */
+        /*268*/	__le32	s_lpf_ino;		/* Location of the lost+found inode */
+            __le32  s_prj_quota_inum;	/* inode for tracking project quota */
+        /*270*/	__le32	s_checksum_seed;	/* crc32c(orig_uuid) if csum_seed set */
+        /*274*/	__u8	s_wtime_hi;
+            __u8	s_mtime_hi;
+            __u8	s_mkfs_time_hi;
+            __u8	s_lastcheck_hi;
+            __u8	s_first_error_time_hi;
+            __u8	s_last_error_time_hi;
+            __u8	s_first_error_errcode;
+            __u8    s_last_error_errcode;
+        /*27c*/ __le16	s_encoding;		/* Filename charset encoding */
+            __le16	s_encoding_flags;	/* Filename charset encoding flags */
+            __le32	s_reserved[95];		/* Padding to the end of the block */
+        /*3fc*/	__u32	s_checksum;		/* crc32c(superblock) */
+    };
+
+    Kütüphane aşağıdaki bağlantıdan indireceğiniz pdf dosyasında dokümante edilmiştir:
+
+    https://www.dubeyko.com/development/FileSystems/ext2fs/libext2fs.pdf
+
+    Ayrıca "e2fsprogs" isimli pakette de ext2, ext3 ve ext4 dosya sistemlerine ilişkin pek çok yardımcı program bulunmaktadır.
+    Örneğin bizim daha önce kullandığımız "dumpe2fs" programı bu paketin bir parçasıdır. Buradaki programlar "libext2fs" 
+    kütüphanesi kulanılarak yazılmıştır. Paket pek çok bazı Linux dağıtımlarında default biçimde kurulu durumdadır. Eğer 
+    dağıtımınızda kurulu değilse bu paketi aşağıdaki gibi kurabilirsiniz:
+
+    $ sudo apt-get install e2fsprogs
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+                                            185. Ders 08/12/2024 - Pazar
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Şimdi "libext2fs" kütüphanesinin basit bir kullanımı üzerinde duracağız. Kütüphanenin temel başlık dosyası <extefs/extfs.h> 
+    isimli dosyadır. Bu dosyanın include edilmesi gerekir:
+
+    #include <ext2fs/ext2fs.h>
+
+    Kütüphaneyi kullanan programlar derlenirken link aşamasında "-lext2fs" seçeneğinin bulundurulması gerekir. Örneğin:
+
+    $ gcc -o sample sample.c -lext2fs
+
+    Kütüphane içerisindeki fonksiyonların çooğunun geri dönüş değerleri errcode_t türündendir. errcode_t türü long biçimde 
+    typedef edilmiştir. Fonksiyonlar başarı durumunda 0 değerine başarısızlık durumunda hata ile ilgili bir değere geri 
+    dönmektedir. Hatayı yazdırmak için error_message isimli fonksiyon bulunmaktadır. Bu fonksiyona errcode_t değeri parametre
+    olarak verilir, fonksiyon da hata yazısna ilişkin static bir dizinin başlangıç adresine geri döner. Örneğin:
+
+    ext2_filsys fs;
+    errcode_t err;
+
+    if ((err = ext2fs_open("/dev/loop0", 0 /* EXT2_FLAG_RW */, 0, 0, unix_io_manager, &fs)) != 0) {
+        fprintf(stderr, "%s\n", error_message(err));
+        exit(EXIT_FAILURE);
+    }
+    
+    Bu kütüphane kullanılarak yazılmış programlar genel olarak aygıtlara eriştiği için "sudo" ile çalıştırılması gerekir. 
+    Aksi takdirde "Permission denied (EACCESS)" hatası ortaya çıkacaktır. 
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Kğtğphanein kullanılması için ilk yapılacak işlem dosya sisteminin ext2fs_open fonksiyonu ile açılmasıdır. Fonksiyonun 
+    prototipi şöyledir:
+
+    errcode_t ext2fs open (const char *name, int args, int superblock, int block size, 
+            io_manager manager, ext2_filsys *ret fs);
+
+    Fonksiyonun birinci parametresi dosya sisteminin bulunduğu dosyanın ya da aygıt dosyasının yol ifadesini almaktadır. 
+    Parametrelerin çoğu default 0 geçilebilir. Ancak io_manager parametresi için unix_io_manager argümanın girilmesi 
+    gerekmektedir. Fonksiyon ext2fil_sys türünden handle belirten bir nesne vermektedir. Bu tür şöyle typedef edilmiştir:
+
+    typedef struct struct_ext2_filsys *ext2_filsys;
+
+    Dosya sistemine ilişkin tüm bilgiler bu struct_ext2_filsys yapısının içerisindedir. Bu yapı şöyle bildirilmiştir:
+
+    struct struct_ext2_filsys {
+        errcode_t			magic;
+        io_channel			io;
+        int				flags;
+        char *				device_name;
+        struct ext2_super_block	* 	super;
+        unsigned int			blocksize;
+        int				fragsize;
+        dgrp_t				group_desc_count;
+        unsigned long			desc_blocks;
+        struct opaque_ext2_group_desc *	group_desc;
+        unsigned int			inode_blocks_per_group;
+        ext2fs_inode_bitmap		inode_map;
+        ext2fs_block_bitmap		block_map;
+        ....
+    };
+        
+    Örneğin bu yapının super elemanı süper blok bilgilerinin bulunduğu ext2_super_block isimli yapı nesnesinin adresi vermektedir. 
+
+    Örneğin:
+
+    ext2_filsys fs;
+    errcode_t err;
+
+    if ((err = ext2fs_open("/dev/loop0", 0 /* EXT2_FLAG_RW */, 0, 0, unix_io_manager, &fs)) != 0) {
+        fprintf(stderr, "cannot open file system!..\n");
+        exit(EXIT_FAILURE);
+    }
+
+    Açılan dosya sisteminin işlem bitince ext2fs_close fonksiyonu ile kapatılması gerekir. Fonksiyonun prototipi şöyledir:
+    
+    errcode_t ext2fs close (ext2_filsys fs);
+
+    Örneğin:
+
+    ext2_filsys fs;
+    errcode_t err;
+
+    if ((err = ext2fs_open("/dev/loop0", 0 /* EXT2_FLAG_RW */, 0, 0, unix_io_manager, &fs)) != 0) {
+        fprintf(stderr, "cannot open file system!..\n");
+        exit(EXIT_FAILURE);
+    }
+        
+    /* ... */
+
+    ext2fs_close(fs);
+---------------------------------------------------------------------------------------------------------------------------*/
+
+#include <stdio.h>
+#include <ext2fs/ext2fs.h>
+
+int main(void)
+{
+    ext2_filsys fs;
+    errcode_t err;
+
+    if ((err = ext2fs_open("/dev/loop0", 0 /* EXT2_FLAG_RW */, 0, 0, unix_io_manager, &fs)) != 0) {
+        fprintf(stderr, "cannot open file system!..\n");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Number of Inode: %lu\n", (unsigned long)fs->super->s_inodes_count);    
+    printf("Total Block: %lu\n", (unsigned long)fs->super->s_blocks_count);
+    /* ... */
+
+    ext2fs_close(fs);
+        
+    return 0;
+}
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Belli bir numaraya sahip i-node elemanını elde edebilmek için ext2fs_read_inode fonksiyonu kullanılmaktadır. Fonksiyonun 
+    prototipi şöyledir:
+
+    errcode_t ext2fs_read_inode(ext2_filsys fs, ext2_ino_t ino, struct ext2_inode *inode);
+
+    Fonksiyonun birinci parametresi dosya sistemini temsil eden handle değeridir. İkinci parametre bilgileri elde edilecek 
+    i-node elemanın numarasını belirtir. Üçüncü parametre de i-node bilgilerinin yerleştirileceği yapının adresini almaktadır. 
+    Örneğin:
+
+    if ((err = ext2fs_read_inode(fs, 13, &inode)) != 0) {
+        fprintf(stderr, "cannot read inode!..\n");
+        exit(EXIT_FAILURE);
+    }
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
 
 ---------------------------------------------------------------------------------------------------------------------------*/
 
@@ -69210,13 +69742,14 @@ void exit_sys(const char *msg)
 
 ---------------------------------------------------------------------------------------------------------------------------*/
 
--------------------------------------------------------------------------------------------------------------------
+/*--------------------------------------------------------------------------------------------------------------------------
 
 ---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
 
 ---------------------------------------------------------------------------------------------------------------------------*/
+
 
 
 /*--------------------------------------------------------------------------------------------------------------------------
