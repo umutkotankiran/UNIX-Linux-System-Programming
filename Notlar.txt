@@ -11,7 +11,7 @@
                         (Notları sabit genişlikli font kullanan programlama editörleri ile açınız.)
                             (Editörünüzün "Line Wrapping" özelliğini pasif hale getiriniz.)
 
-                                                    Son Güncelleme: 22/11/2024 - Cuma
+                                                    Son Güncelleme: 23/12/2024 - Pazartesi
 
 ---------------------------------------------------------------------------------------------------------------------------*/
 
@@ -11621,7 +11621,7 @@ void exit_sys(const char *msg)
     Etkin kullanıcı id'si: root
     Saklı kullanıcı id'si: root
 
-    Şimdi biz sonraki paragrafta göreceğimiz seteuid fonksiyonu ile geri dönüp prosesin yetkisini azaltarak onun etikin kullanıcı
+    Şimdi biz sonraki paragrafta göreceğimiz seteuid fonksiyonu ile geri dönüp prosesin yeteneğini azaltarak onun etikin kullanıcı
     id'sinin kaan olmasını sağlayalım. Bu durumdaki id'ler şöyle olacaktır:
 
     Gerçek kullanıcı id'si: kaan
@@ -63903,7 +63903,7 @@ clean:
 
     typedef enum irqreturn irqreturn_t;
 
-    request_irt fonksiyonunun üçüncü parametresi bazı bayraklardan oluşur. Bu bayrak 0 geçilebilir ya da örneğin IRQF_SHARED 
+    request_irq fonksiyonunun üçüncü parametresi bazı bayraklardan oluşur. Bu bayrak 0 geçilebilir ya da örneğin IRQF_SHARED 
     geçilebilir. Diğer seçenekler için dokümanlara başvurabilirsiniz. IRQF_SHARED aynı kesmenin birden fazla aygıt sürücü tarafından 
     kullanılabileceği anlamına gelmektedir. (Tabii biz ilk register ettiren değilsek daha önce register ettirenlerin bu bayrağı 
     kullanmış olması gerekir. Aksi halde biz de bu bayrağı kullanamayız.) Fonksiyonun dördüncü parametresi "/proc/interrupts" 
@@ -64989,7 +64989,7 @@ void exit_sys(const char *msg)
     crw-rw----  1 root disk     21,   1 Ağu  7 13:57 sg1
     ...
 
-    Burada sda aygıt dosyası diske bir bütün olarak erişmek için kullanılırken sda1, sda2, sda3 aygıt dosyaları ise diskteki disk 
+    Burada "sda" aygıt dosyası diske bir bütün olarak erişmek için kullanılırken sda1, sda2, sda3 aygıt dosyaları ise diskteki disk 
     bölümlerine (partition) erişmek için kullanılmaktadır. Bu aygıt dosyalarının majör numaralarının aynı olduğuna ancak minör 
     numaralarının farklı olduğuna dikkat ediniz. Biz bir flash belleği USB soketine taktığımızda burada flash belleğe erişmek için 
     gerekli olan aygıt dosyaları otomatik biçimde oluşturulacaktır.
@@ -70120,14 +70120,276 @@ int main(void)
     aynı işlemlerin daha kolay yapılması sağlanabilmektedir.
 ---------------------------------------------------------------------------------------------------------------------------*/
 
+/*--------------------------------------------------------------------------------------------------------------------------
+    Biz modern Linux sistemlerinde yetki gerektiren programları "sudo" komutuyla ("sudo" bir programdır) çalıştırmaktayız. 
+    Bir programı "sudo" ile çelıştırdığımızda yaratılan prosesin ekin kullanıcı id'si 0 ve etkin ghrup id'si, gerçek kullanıcı 
+    id'si ve gerçek grup id'si 0 olur. Kullanıcı id'si sıfır olan kullanıcı genellikle "root" ismiyle bulundurulmaktadır. Pek 
+    çok UNIX türevi sistemde aynı zamanda 0 numaralı bir grup da bulunmaktadır. Bu da genellikle "root" biçiminde isimlendirilmektedir. 
+    Yani "root" isminde hem bir kullanıcı hem de bir grup bulunmaktadır. Anımsanacağı gibi prosesin etkin grup id'sinin 0 olması 
+    hiçbir erişim ayrıcalığı oluşturmamaktadır. Asıl olan "etkin kullanıcı id'sinin" 0 olmasıdır. Anımsanacağı gibi Linux sistemleri 
+    install edilirken kurulm sırasında kullanıcının girdiği isimle aynı olan bir kullanıcı ismi ve grup ismi oluşturulmaktadır. 
+    Kullanıcı ve grup id'lerinin farklı isim alanlarında olduğunu anımsayınız. Örneğin 1000 numaralı bir kullanıcı id'si de olabilir 
+    bir grup id'si de olabilir. Ancak aynı id'ye sakip birden fazla kullanıcı ya da grup olmamalıdır. (Tabii bu durum aslında 
+    yasak değildir. Yani bir örneğin etkin kullanıcı id'si 0 olan başka bir kullanıcı da yaratabiliriz. Çekirdek isimleri 
+    değil numaraları işleme sokmaktadır.)
+---------------------------------------------------------------------------------------------------------------------------*/
 
+/*--------------------------------------------------------------------------------------------------------------------------
+    Bir programı "sudo" ile çalıştırdığımızda çalıştırılan programa ilişkin prosesin etkin ve gerçek kullanıcıid'sinin ve grup
+    id'sinin 0 olduğunı belirtmiştik. Yani "sudo" ile bir programı çalıştırdığımızda adeta program "root" kullanıcısı tarafından 
+    çalıştırılıyormuş gibi bir etki oluşmaktadır. Linux dağıtımlarının bir bölümünde "root" kullanıcısı ile "login" olma güvenlik
+    gerekçesiyle engellenmiştir. Ancak bu dağıtımlarda "root" olarak "bash" komut satırına düşmek istiyorsanız "sudo" ile "bash" 
+    programını çalıştırabilirsiniz. Örneğin:
+
+    $ sudo bash
+
+    Bir programı "sudo" ile çalıştırmak istediğimizde bizden önce kendi kullanıcımıza ilişkin parola istenmektedir. Ancak bir 
+    süre içerisinde artık "sudo" yapıldığında parola istenmeyecektir. 
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Her kullanıcı "sudo" yapamamaktadır. "sudo" yapabilen kullanııclara "sudoer" denilmektedir. Sistem kurulurken kurulum
+    programı tarafından yaratılan kullanıcı "sudoer" durumundadır. Bir kullanıcıyı "sudoer" yapabilmek için en basit yol o 
+    kullanıcıyı "/etc/group" dosyasında "sudo" grubuna eklemektir. Örneğin kursun yapıldığı makinedeki "/etc/group" dosyasıın 
+    "sudo" grup satırı şöyledir:
+
+    sudo:x:27:kaan
+
+    Baradan "sudo" grubunun grup id'sinin 27 olduğu ve "kaan" kullanıcısının bu gruba ek grup (supplemantary group) biçiminde 
+    dahil olduğu görülmektedir. Şimdi biz "ali" kullancısının da "sudo" yapabilmesini istiyorsak "ali" kullanıcı ismini de aşağıdaki 
+    gibi satıra eklemeliyiz:
+
+    sudo:x:27:kaan,ali
+
+    Aslında bu işlem komut satırında "usermod" komutu ile "-a" ve "-G" seçenekleri kullanılarak da yapılabilmektedir. Örneğin:
+
+    $ sudo usermod -a -G sudo student 
+
+    Tabii bu komutu şöyle de uygulayabilirdik:
+
+    $ sudo usermod -aG sudo student 
+
+    Kullanıcıya "sudo" yeteneği verebilmenim diğer bir yolu da "/etc/sudoers" dosyasına yeni bir giriş eklemektir. Biz burada 
+    bu yöntem üzerinde durmayacağız. 
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Bir programı "sudo" ile çalıştırdığımızda üst prosesin çevre değişkenleri default durumda çalıştırılan programa aktarılmamaktadır.
+    Örneğin biz kabukta bazı çevre değişkenleri tanıomlamış olalım. "sudo" ile bir program çalıştırdığımızda bu çevre değişkenleri 
+    default durumda yaratılan prosese aktarılmayacaktır. Bunu basit bir biçimde deneyimleyebiliriz. Bunun için önce komut 
+    satırında aşağıdaki gibi çevre değişkenleri oluşturabiliriz:
+
+    $ export XXX=100
+    $ export YYY=100
+
+    Şimdi "env" komutunu uygularsak bu çevre değişkenlerinin yaratılmış olduğunu görürüz. Ancak "sudo env" komutunu uyguladığımızda
+    bu çevre değişkenleri alt prosese aktarılmayacağı için onları göremeyeceğiz. Ancak kabuğun çevre değişkenleri çalıştırılan 
+    programa ilişkin prosese "-E" seçeneği kullanılarak aktarılabilmektedir. Örneğin:
+
+    $ sudo -E env
+
+    Ancak "-E" seçeneği de güvenlik gerekçesiyle PATH çevre değişkenini yaratılan prosese geçirmemektedir. 
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+                                        188. Ders 27/12/2024 - Cuma
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    sudo işlemi konusunda "/etc/sudoers" dosya da etkilidir. Bu dosyaya girişler eklenerek belli bir proses sudoer yapılabilmektedir. 
+    Bu dosyanın başındaki aşağıdaki satırlar önemlidir:
+    
+    Defaults        env_reset
+    Defaults        mail_badpass
+    Defaults        secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
+    Defaults        use_pty
+
+    Buradaki "env_reset" satırında "env_reset" yerine "env_keep" getirilirse defaut olarak burada belirtilen çevre değişkenleri 
+    sudo ile çalıştırılan proseslere aktarılmaktadır. Örneğin:
+
+    Defaults    env_keep += "XX YY"
+
+    Burada sudo ile bir program çalıştırıldığında alt prosese XX ve YY çevre değişkenleri aktarılacaktır. env_keep += "*"
+    tüm çevre değişkenlerinin aktarılacağı anlamına gelir. Ancak yine PATH çevre değişkeni bunun dışındadır. Örneğin:
+
+    Defaults    env_keep += "*"
+
+    Eğer PATH çevre değişkeninin de yaratılan prosese aktarılması isteniyorsa secure_path satırı kaldırılmalı ya da # ile 
+    yorum satırı içerisie alınmalıdır. Örneğin:
+
+    Defaults        env_reset
+    Defaults        mail_badpass
+    # Defaults      secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
+    Defaults        use_pty
+---------------------------------------------------------------------------------------------------------------------------*/
+
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Klasik UNIX tasarımında erişim bakımından "ya hep ya hiç" sistemi uygulanmaktadır. Yani sıradan kullanıcılar sistemle 
+    ilgili önemli dosyalara erişemezler ve sistemde davranış değişikliklerine yol açabilecek sistem fonksiyonlarını çağıramazlar. 
+    Ancak prosesin kullanıcı id'si 0 ise (yani proses "root" hakkına sahipse) her şeyi yapabilirler. Bazı UNIX türevi sistemlerde 
+    bu "ya hep ya hiç" sistemi "yeteneklilik (capability)" denilen kavramla yumuşatılmıştır. Bu sistemlerde çeşitli yetenekler 
+    vardır. Bir proses root hakkına sahip olmasa bile bu yeteneklerden bazılarına sahip olabilir. Bu durumda bu yetenekleri 
+    gerektiren bazı işlemleri yapabilir.
+
+    Yeteneklilik (capability) konusu POSIX standartlarına sokulmamıştır. POSIX standartları genel olarak "uygun öncelik 
+    (appropriate priveledge)" terimini kullanmaktadır. Burada uygun öncelik prosesin root önceliğinde olması ya da ilgili 
+    işlemi yapacak yeteneğe sahip olması anlamına gelmektedir. 
+
+    Yetenelilik konusu POSIX tarafından standardize edilmiş bir konu olmadığı için farklı UNIX türevi sistemlerde farklı 
+    biçimlerde gerçekleştirilmiştir. Ancak bunlar arasında en geniş tasarıma sahip olan Linux sistemleridir. 
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Bir prosesin sahip olabileceği yetenekler proses kontrol bloğunda bitsel bir biçimde tutulmaktadır. Linux'taki yetenekler
+    şunlardır:
+
+    CAP_CHOWN: Dosya sahibi ve grup değiştirme yeteneği.
+    CAP_DAC_OVERRIDE: Dosya erişim kontrollerini geçme yeteneği (okuma/yazma/çalıştırma).
+    CAP_DAC_READ_SEARCH: Dosya okuma ve dizin arama izinlerini geçme yeteneği.
+    CAP_FOWNER: Dosya üzerinde, sahibi tarafından yapılan işlemleri yapma yeteneği (örneğin, dosya silme).
+    CAP_FSETID: Dosyanın UID veya GID’sini değiştirme yeteneği.
+    CAP_KILL: Diğer proseslere sinyal gönderme yeteneği.
+    CAP_SETGID: Kullanıcı grubunu değiştirme yeteneği.
+    CAP_SETUID: Kullanıcı kimliğini değiştirme yeteneği.
+    CAP_SETPCAP: Process yetenekliliğini değiştirme yeteneği.
+    CAP_LINUX_IMMUTABLE: Bir dosyanın değiştirilemez (immutable) hale getirilmesini sağlama yeteneği.
+    CAP_NET_BIND_SERVICE: Düşük numaralı portlara (1024'ten küçük) bağlanma yeteneği.
+    CAP_NET_BROADCAST: Ağda broadcast (yayın) yapma yeteneği.
+    CAP_NET_ADMIN: Ağ ayarlarını yönetme, ağ arayüzlerini yapılandırma yeteneği.
+    CAP_NET_RAW: Düşük seviyeli ağ işlemleri yapabilme yeteneği.
+    CAP_IPC_LOCK: Bellek üzerinde kilit (lock) işlemleri yapma yeteneği.
+    CAP_IPC_OWNER: IPC (Inter-process communication) kaynaklarının sahipliğini değiştirme yeteneği.
+    CAP_SYS_MODULE: Linux modüllerini yükleme ve kaldırma yeteneği.
+    CAP_SYS_RAWIO: Donanımsal I/O portlarına erişme yeteneği
+    CAP_SYS_CHROOT: chroot (root dosya sistemi değiştirme) işlemi yapma yeteneği.
+    CAP_SYS_PTRACE: Diğer süreçleri izleme ve kontrol etme yeteneği (örneğin, hata ayıklama).
+    CAP_SYS_PACCT: Process accounting verilerini okuma veya yazma yeteneği.
+    CAP_SYS_ADMIN: Sistem yöneticisi yetkileri (modül yükleme, dosya sistemi değiştirme vb.).
+    CAP_SYS_BOOT: Sistemi yeniden başlatma veya açma yeteneği.
+    CAP_SYS_NICE: Diğer proseslerin nice değerini değiştirme yeteneği.
+    CAP_SYS_RESOURCE: Sistem kaynaklarını yönetme ve limitlerini ayarlama yeteneği.
+    CAP_SYS_TIME: Sistemin saatini değiştirme yeteneği.
+    CAP_SYS_TTY_CONFIG: TTY (terminal) ayarlarını değiştirme yeteneği.
+    CAP_MKNOD: Aygıt dosyaları oluşturma yeteneği.
+    CAP_LEASE: Dosya kiralama (lease) mekanizmasını kullanma yeteneği.
+    CAP_AUDIT_WRITE: Audit (denetim) sistemine yazma yeteneği.
+    CAP_AUDIT_CONTROL: Audit sistemi yapılandırmalarını değiştirme yeteneği.
+    CAP_SETFCAP: Dosya yetenekiliğini (capabilities) ayarlama yeteneği.
+    CAP_MAC_OVERRIDE: MAC (Mandatory Access Control) politikalarını geçme yeteneği.
+    CAP_MAC_ADMIN: MAC politikalarını yönetme yeteneği.
+    CAP_SYSLOG: Sistem günlüklerini (log) okuma veya yazma yeteneği.
+    CAP_WAKE_ALARM: Sistemi uyanma alarmıyla uyandırma yeteneği.
+    CAP_BLOCK_SUSPEND: Sistemin uykuya geçmesini engelleme yeteneği.
+    CAP_AUDIT_READ: Audit verilerini okuma yeteneği.
+    CAP_PERFMON: Performans izleme (profiling) yeteneği.
+    CAP_BPF: BPF (Berkeley Packet Filter) programlarını yükleme ve çalıştırma yeteneği.
+    CAP_CHECKPOINT_RESTORE: Bir süreç için checkpoint alma ve geri yükleme yeteneği.
+
+    Örneğin biz kill fonksiyonu kabaca yalnızca kendimizin oluşturduğu proseslere sinyal gönderebiliriz. Ancak eğer prosesimizin
+    CAP_KILL yetenekliliği varsa bu durumda tıpkı root prosesi gibi başka proseslere de sinyal gönderebiliriz. 
+
+    Linux sistemlerindeki yeteneklilik (capability) konusu maalesef biraz karmaşık bir konudur. İzleyen paragraflarda konunun
+    ayrıntılarına gireceğiz. 
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Aslında Linux sistemlerinde yeteneklilik proses temelinde değil thread temelinde uygulanmaktadır. Yani prosesin farklı 
+    thread'leri farklı yeteneklere sahip olabilmektedir. Ancak pratikte prosesin tüm thread'leri genellikle aynı yeteneklere 
+    sahip olur. Yetenekler proses kontrol bloğunda bitsel düzeyde tutulmaktadır. Yani yukarıdaki listedeki CAP_XXXX sembolik 
+    sabitleri aslında tüm bitleri 0 olan yalnızca tek biti 1 olan sembolik sabitlerdir. Eskiden proses kontrol bloğunda yetenekleri 
+    tutan nesneler 32 bitlik nesnelerdi. Sonra çeşitli yetenekler de sisteme eklenince bunlar 64 bite yükseltildiler. Bugünkü
+    Linux çekirdeklerinde therad'e ilişkin yetenekler task_struct yapısının cred isimli elemanının gösterdiği struct cred
+    yapısında tutulmaktadır. 
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Bir thread'in üç grup yetenekleri vardır: Etkin yetenekler (Effective capabilities), İzin verilen yetenekler (permitted 
+    capabilities) ve Aktarılan yetenekler (inheriable capabilities). Test işlemlerine etkin yetenekler sokulmaktadır. Örneğin
+    thread'imizin başka bir prosese sinyal gönderebilmesi için thread'imizin etkin yetenekleri arasında CAP_KILL bulunuyor 
+    olması gerekir. İzin verilen yetenekler (permitted capabilities) etkin yetenekler için bir üst küme oluşturmaktadır. Yani 
+    bir thread'in kendisinin etkin yetenekleri ancak izin verilen yetenekleri kadar olabilir. Thread'in bir etkin yetenek kümesinde
+    bir yetenek yoksa ancak izin verilen kümesinde varsa proses izin verilen kümesi içerisindeki o yeteneği etkin kümesine 
+    taşıyabilir. Ancak izin verilen kümesini genişletemez. Başka bir deyişle thread'in etkin yetenek kümesi izin verilen yetenek 
+    kümesinin bir alt kümesi biçimindedir. Aktarılabilen yetenek kümesi proses thread bir programı çalıştırdığında onun 
+    izin verilen kümesine dahil edilebilecek yenekleri belirtmektedir. Bu konu izleyen paragraflarda ele alınacaktır.
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Biz yukarıda Linux çekirdeğinin yetenekleri thread temelinde işleme soktuğunu belirttik. Yetenekler fork işlemi sırasında
+    ya da pthread_create işlemi sırasında (bu da bir çeşit fork işlemi gibidir) üst thread'ten alt thread'e aktarılmaktadır. 
+    Yani aslında default durumda bir prosesin tüm thread'leri aynı yeteneklere sahiptir. Fakat biz istersek prosesin belli bir 
+    thread'inin yeteneklerini diğer thread'lere dokunmadan değiştirebiliriz. Üst proses fork uyguladığında onun "etkin", "izin 
+    verilen", ve "aktarılan" yeteneklerinin hepsi alt prosese aktarılmaktadır. 
+
+    Herhangi bir önceliğe sahip olmayan sıradan proseslerin etkin, izin verilen ve aktarılan yetenek kümesinde hiçbir yetenek 
+    yoktur. Örneğin biz bir teminal açıp orada çalışan kabuk programının (bash) yetenek kğmelerine baksak bu üç yetenek kümesinin
+    de boş küme olduğunu görürüz.
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Linux sistemlerinde thread'in yeteneklerini elde etmek için ve onu set etmek için sys_getcap ve sys_setcap isimli iki 
+    sistem fonksiyonu bulundurulmuştur. Ancak libc kütüphanesinde bu sistem fonksiyonlarını çağıran fonksiyonlar bulunmamaktadır. 
+    Eğer bu sistem fonksiyonlarını çağıracaksanız bunların numaralarını belirterek syscall isimli fonksiyonla çağırabilirsiniz. 
+    Ancak bu sistem fonksiyonlarının kullanımı biraz zahmetlidir. Bu fonksiyonlar yerine bu sistem fonksiyonları çağrılarak 
+    yazılmış olan "libcap" isimli bir kütüphane de bulunmaktadır. Sistem programcıları genellikle sys_getcap ve sys_setcap 
+    fonksiyonlarını kullanmak yerine zaten bunları kullanan "libcap" kütüphanesini kullanmayı tercih etmektedir. Ancak bu "libcap"
+    kütüphanesi default durumda genellikle yüklü olmaz. Bu kütüphaneyi Debain türevi sistemlerde aşağıdaki gibi yükleyebilirsiniz
+
+    $ sudo apt install libcap2 libcap-dev
+---------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------------
+    Bir prosesin yetenek kümeleri "/proc/<pid>/status" dosyasından elde edilebilir. Buradaki yeteneklere ilişkin bilgiler 
+    aşağıdaki gibi gözükecektir:
+
+    CapInh:	0000000000000000
+    CapPrm:	0000000000000000
+    CapEff:	0000000000000000
+
+    Bu örnekte prosesin bütün yetenek kümesi boştur. Yani proses hiçbir yeteneğe sahip değildir. Anımsanacağı gibi aslında 
+    "proc" dosya sisteminde her için bir dizin yaratılmaktadır. Yani "/proc/<pid>/status" yol ifadesindeki pid aslında ilgili
+    thread'in gettid fonksiyonu ile elde edilen pid numarasıdır. (POSIX standartlarında thread'lerin pid değerinin olmadığını 
+    ancak Linux sistemlerinde Linux çekirdeğinin thread'leri prosesler gibi oluşturduğu için thread'lerin de pid değerlerinin 
+    olduğunu anımsayınız. Yine anımsanacağı gibi proc disya sisteminde ana thread'e ilişkin "task" dizininde prosesin thread'lerinin
+    pid numaraları bulunmaktadır. )
+
+    Bir thread'in yetenekleri "libcap" kütüphanesindeki cap_get_proc fonksiyonu ile elde edilebilir. Fonksiyon kendisini 
+    çağıran thread'in yetenek bilgilerini temsil eden cap_t türünden bir handle değeri ile geri döner. 
+
+    #include <sys/capability.h>
+
+    cap_t cap_get_proc(void);
+
+    cap_t türü aşağıdaki gibi bildirilmiştir:
+
+    typedef struct __user_cap_header_struct {
+        __u32 version;          // Versiyon numarası
+        __pid_t pid;            // İşlem ID'si (PID)
+    } cap_user_header_t;
+
+    typedef struct __user_cap_data_struct {
+        __u32 effective;        // Etkin (effective) yetenekler
+        __u32 permitted;        // İzin verilen (permitted) yetenekler
+        __u32 inheritable;      // Kalıtılabilir (inheritable) yetenekler
+    } cap_user_data_t;
+
+    typedef cap_user_header_t* cap_t;
+
+    Programcı cap_t handle değerini doğrudan kullanmaz, diğer fonksiyonlara argüman olarak verir. Aşağıda cap_t handle değeri 
+    yoluyla thread'in yeteneklerini yazısal bir biçimde yazdıran bir fonksiyon örneği verilmiştir:
+
+    
+
+---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
 
 ---------------------------------------------------------------------------------------------------------------------------*/
 
+/*--------------------------------------------------------------------------------------------------------------------------
 
-
+---------------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------------
     Linux kernel istenirse kaynak kodlarından yeniden derlenip (yani build edilip) elde edilen yeni kernel ile sistem başlatılabilir. 
@@ -70135,7 +70397,7 @@ int main(void)
 
     - Kernel'ın yükseltilmesi istenebilir. Yani örneğin kernel'ın yeni bir versiyonu çıkmış olabilir. Biz de bu yeni versiyonun kaynak 
     kodlarını indirip onu derleyerek kullanmak isteyebiliriz.
-
+n
     - Kernel kodlarının çeşitli yerleri çeşitli amaçlarla (deneysel olabilir, başka amaçlarla olabilir) değiştirilmek istenebilir. 
     Örneğin çizelgeleyici alt sistem değiştirilerek yeni sistem denenmek istenebilir. Dosya sisteminde değişiklikler yapılmak istenebilir. 
     Ya da mevcut kernel'daki çeşitli bug'lar düzeltilmek istenebilir (patch işlemi).
